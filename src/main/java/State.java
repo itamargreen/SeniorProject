@@ -17,7 +17,7 @@ public class State {
         for (int i = 0; i < h; i++) {
             Arrays.fill(cellStates[i], WinAssessment.cellState.EMPTY);
         }
-        print();
+
 
     }
 
@@ -131,13 +131,13 @@ public class State {
 
                 switch (cellStates[i][j]) {
                     case BLUE:
-                        res[i * h + j] = 1.0;
+                        res[i * w + j] = 1.0;
                         temp.add(1.0);
                     case RED:
-                        res[i * h + j] = -1.0;
+                        res[i * w + j] = -1.0;
                         temp.add(-1.0);
                     case EMPTY:
-                        res[i * h + j] = 0.0;
+                        res[i * w + j] = 0.0;
                         temp.add(0.0);
 
                 }

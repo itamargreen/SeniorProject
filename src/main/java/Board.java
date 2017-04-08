@@ -8,6 +8,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Stack;
 
 /**
@@ -54,25 +55,13 @@ public class Board extends JFrame implements MouseListener {
         getContentPane().add(panel, BorderLayout.CENTER);
 
         WinAssessment.fill = new boolean[h];
-//        s.makeMove(1, 0);
-//        s.makeMove(-1, 1);
-//        s.makeMove(1, 2);
-//        s.makeMove(-1, 3);
-//        s.makeMove(1, 4);
-//        s.makeMove(-1, 5);
-//        s.makeMove(1, 6);
-//        System.out.println("last row "+s.lastRow());
 
-//        s.makeMove(-1, 1);
-////        s.makeMove(1, 2);
-////        s.makeMove(-1, 1);
-//        s.makeMove(1, 3);
-//        s.makeMove(-1, 1);
-//        s.makeMove(1, 4);
         panel.setState(s);
         calculate.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                doThing();
+                double[] input = s.convertToArray();
+                int out = doThing();
+                RegressionSum.nnThings(input,new double[]{out});
             }
         });
 
@@ -81,7 +70,7 @@ public class Board extends JFrame implements MouseListener {
         Thread gameThread = new Thread(new Runnable() {
             public void run() {
                 while (true) {
-                    // panel.setState(s);
+                    panel.setState(s);
 
                     repaint();
                     panel.repaint();
@@ -108,17 +97,13 @@ public class Board extends JFrame implements MouseListener {
         WinAssessment.cellState tes = s.checkWin();
         System.out.println(tes);
         TreeNode<State> future = WinAssessment.assessWin(s, 1, panel);
-        System.out.println("done");
+
 
         return WinAssessment.diff;
     }
 
     public void mouseClicked(MouseEvent e) {
 
-//        for (int i = 0; i < w * h; i++) {
-//            g.drawOval(, (getWidth() - size * 2) / w * (i / w) + (int) (size * 1.5-0.5), size+1, size+1);
-//
-//        }
 
 
     }

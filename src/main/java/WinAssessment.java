@@ -36,11 +36,11 @@ private static int lastLine = -1;
 
 double r1 = (double)countBlue;
         double r2 = (double)countRed;
-        if(Math.abs(r1-r2)> count/45 && count>250000){
+        if(Math.abs(r1-r2)> count/45 && count>25000){
             return;
         }
 
-        if (count > 5000000 /* || (Math.abs(countBlue-countRed)/(double)Math.max(countBlue,countRed))>0.75*/) {
+        if (count > 500000 /* || (Math.abs(countBlue-countRed)/(double)Math.max(countBlue,countRed))>0.75*/) {
             return;
         }
         if (!node.getContent().checkWin().equals(cellState.EMPTY)) {
