@@ -1,9 +1,5 @@
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -11,8 +7,43 @@ import java.util.List;
  */
 public class State {
 
-    private WinAssesment.cellState[][] cellStates;
+    private WinAssessment.cellState[][] cellStates;
     private int w = 0, h = 0;
+
+    public State(int w, int h) {
+        this.w = w;
+        this.h = h;
+        cellStates = new WinAssessment.cellState[h][w];
+        for (int i = 0; i < h; i++) {
+            Arrays.fill(cellStates[i], WinAssessment.cellState.EMPTY);
+        }
+
+
+    }
+
+    public State(State copy) {
+        cellStates = new WinAssessment.cellState[copy.getH()][copy.getW()];
+        w = copy.getW();
+        h = copy.getH();
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
+                switch (copy.getCellStates()[i][j]) {
+                    case BLUE:
+                        cellStates[i][j] = WinAssessment.cellState.BLUE;
+                        break;
+                    case RED:
+                        cellStates[i][j] = WinAssessment.cellState.RED;
+                        break;
+                    case EMPTY:
+                        cellStates[i][j] = WinAssessment.cellState.EMPTY;
+                        break;
+                }
+
+            }
+        }
+        //print();
+
+    }
 
     public int getW() {
         return w;
@@ -22,10 +53,40 @@ public class State {
         return h;
     }
 
-    public WinAssesment.cellState[][] transpose() throws IllegalArgumentException {
-        WinAssesment.cellState[][] arr = cellStates;
+    public void print() {
+        System.out.println("new: ");
+
+
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w * 10; j++) {
+                System.out.print("-");
+            }
+            System.out.println();
+            System.out.print("|");
+            for (int j = 0; j < w; j++) {
+                int spaces = 10 - cellStates[i][j].name().length();
+
+                System.out.print(cellStates[i][j].name());
+                for (int k = 0; k < spaces; k++) {
+                    if (spaces - k == 4) {
+                        System.out.print("|");
+                    }else{
+                        System.out.print(" ");
+                    }
+
+                }
+
+
+            }
+
+            System.out.println();
+        }
+    }
+
+    public WinAssessment.cellState[][] transpose() throws IllegalArgumentException {
+        WinAssessment.cellState[][] arr = cellStates;
         if (arr.length > 0) {
-            WinAssesment.cellState[][] res = new WinAssesment.cellState[arr[0].length][arr.length];
+            WinAssessment.cellState[][] res = new WinAssessment.cellState[arr[0].length][arr.length];
 
             for (int i = 0; i < arr[0].length; i++) {
                 for (int j = 0; j < arr.length; j++) {
@@ -39,60 +100,27 @@ public class State {
         }
     }
 
-    public State(int w, int h) {
-        this.w = w;
-        this.h = h;
-        cellStates = new WinAssesment.cellState[w][h];
-        for (int i = 0; i < h; i++) {
-            Arrays.fill(cellStates[i], WinAssesment.cellState.EMPTY);
-        }
-
-    }
-
-    public State(State copy) {
-        cellStates = new WinAssesment.cellState[copy.getW()][copy.getH()];
-        w = copy.getW();
-        h = copy.getH();
-        for (int i = 0; i < w; i++) {
-            for (int j = 0; j < h; j++) {
-                switch (copy.getCellStates()[i][j]) {
-                    case BLUE:
-                        cellStates[i][j] = WinAssesment.cellState.BLUE;
-                        break;
-                    case RED:
-                        cellStates[i][j] = WinAssesment.cellState.RED;
-                        break;
-                    case EMPTY:
-                        cellStates[i][j] = WinAssesment.cellState.EMPTY;
-                        break;
-                }
-
-            }
-        }
-
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < h; i++) {
-            for (int j = 0; j < w; j++) {
-                sb.append(cellStates[i][j].name() + "\t");
-            }
-            sb.append("\n");
-        }
-        try {
-            FileWriter fw = new FileWriter(new File("C:\\Users\\itama\\Desktop\\test.txt"));
-            fw.write(sb.toString());
-            fw.flush();
-            fw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-        return sb.toString();
-    }
+//    @Override
+//    public String toString() {
+//        StringBuilder sb = new StringBuilder();
+//        for (int i = 0; i < h; i++) {
+//            for (int j = 0; j < w; j++) {
+//                sb.append(cellStates[i][j].name() + "\t");
+//            }
+//            sb.append("\n");
+//        }
+//        try {
+//            FileWriter fw = new FileWriter(new File("E:\\Users\\itamar\\Desktop\\test.txt"));
+//            fw.write(sb.toString());
+//            fw.flush();
+//            fw.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//
+//        return sb.toString();
+//    }
 
     public double[] convertToArray() {
         List<Double> temp = new ArrayList<Double>();
@@ -103,13 +131,13 @@ public class State {
 
                 switch (cellStates[i][j]) {
                     case BLUE:
-                        res[i * h + j] = 1.0;
+                        res[i * w + j] = 1.0;
                         temp.add(1.0);
                     case RED:
-                        res[i * h + j] = -1.0;
+                        res[i * w + j] = -1.0;
                         temp.add(-1.0);
                     case EMPTY:
-                        res[i * h + j] = 0.0;
+                        res[i * w + j] = 0.0;
                         temp.add(0.0);
 
                 }
@@ -118,14 +146,26 @@ public class State {
             }
 
         }
-        for(int i = 0; i<res.length;i++){
+        for (int i = 0; i < res.length; i++) {
             res[i] = temp.get(i);
         }
 
 
         return res;
     }
+public int lastRow(){
+        int row = 0;
+    for (int i = h-1; i >=0; i--) {
 
+        WinAssessment.cellState[] r = cellStates[i];
+        if(!Arrays.asList(r).contains(WinAssessment.cellState.EMPTY)){
+            row = i;
+            break;
+        }
+
+    }
+    return row;
+}
     public boolean makeMove(int player, int col) {
 
         switch (player) {
@@ -145,24 +185,33 @@ public class State {
         return false;
     }
 
+    /**
+     *
+     * @param player
+     * @param col
+     * @return
+     */
+
     private boolean applyMove(int player, int col) {
-        WinAssesment.cellState[] column = new WinAssesment.cellState[h];
-        int lastRow = w;
-        for (int j = w - 1; j >= 0; j--) {
+        WinAssessment.cellState[] column = new WinAssessment.cellState[h];
+        int lastRow = h;
+        for (int j = h - 1; j >= 0; j--) {
             column[j] = cellStates[j][col];
-            if (column[j] == WinAssesment.cellState.EMPTY && lastRow == w) {
+            if (column[j] == WinAssessment.cellState.EMPTY && lastRow == h) {
                 lastRow = j;
             }
         }
-        if (column[0] != WinAssesment.cellState.EMPTY) {
+        if (column[0] != WinAssessment.cellState.EMPTY) {
             return false;
         } else {
             switch (player) {
                 case 1:
-                    cellStates[lastRow][col] = WinAssesment.cellState.BLUE;
+                    cellStates[lastRow][col] = WinAssessment.cellState.BLUE;
+
                     break;
                 case -1:
-                    cellStates[lastRow][col] = WinAssesment.cellState.RED;
+                    cellStates[lastRow][col] = WinAssessment.cellState.RED;
+
                     break;
 
             }
@@ -171,11 +220,11 @@ public class State {
         }
     }
 
-    public WinAssesment.cellState checkWin() {
+    public WinAssessment.cellState checkWin() {
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
-                WinAssesment.cellState temp = cellStates[i][j];
-                if (temp == WinAssesment.cellState.EMPTY)
+                WinAssessment.cellState temp = cellStates[i][j];
+                if (temp == WinAssessment.cellState.EMPTY)
                     continue;
                 if (j < w - 3) {
                     if (cellStates[i][j + 1] == temp && cellStates[i][j + 2] == temp && cellStates[i][j + 3] == temp) {
@@ -200,10 +249,10 @@ public class State {
 
             }
         }
-        return WinAssesment.cellState.EMPTY;
+        return WinAssessment.cellState.EMPTY;
     }
 
-    public WinAssesment.cellState[][] getCellStates() {
+    public WinAssessment.cellState[][] getCellStates() {
         return cellStates;
     }
 

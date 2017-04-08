@@ -1,24 +1,27 @@
 import com.diffplug.common.base.TreeNode;
-import javafx.util.Pair;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.Stack;
 
 /**
  * Created by itamar on 21-Mar-17.
  */
 public class Board extends JFrame implements MouseListener {
     public static Stack<Integer>[] boardStacks;
+    protected static int playerTurn = 1;
     private myPanel panel;
     private int w, h;
     private State s;
-
-    public State getS() {
-        return s;
-    }
+    private List<move> played = new ArrayList<move>();
 
     public Board(int w, int h) {
         this.w = w;
@@ -29,7 +32,7 @@ public class Board extends JFrame implements MouseListener {
             boardStacks[i] = new Stack<Integer>();
             boardStacks[i].setSize(h);
         }
-        setSize(500, 500);
+        setSize(w*50+100, h*50+100);
         panel = new myPanel(w, h);
 
         JPanel buttonPanel = new JPanel();
@@ -47,23 +50,26 @@ public class Board extends JFrame implements MouseListener {
         //layout.putConstraint(SpringLayout.EAST,calculate,buttonPanel.getWidth()/2-10,SpringLayout.EAST,buttonPanel);
         //getContentPane().add(buttonPanel,BorderLayout.NORTH);
         JFrame frame = new JFrame();
-        frame.getContentPane().add(buttonPanel);
+        //frame.getContentPane().setLayout(new FlowLayout());
+        frame.getContentPane().add(calculate, BorderLayout.NORTH);
+        final JCheckBox eval = new JCheckBox("Evaluate");
+        frame.getContentPane().add(eval, BorderLayout.SOUTH);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         getContentPane().add(panel, BorderLayout.CENTER);
 
+        WinAssessment.fill = new boolean[h];
 
-        s.makeMove(1, 1);
-        s.makeMove(-1, 1);
-        s.makeMove(1, 2);
-        s.makeMove(-1, 1);
-        s.makeMove(1, 3);
-        s.makeMove(-1, 1);
-//        s.makeMove(1, 4);
         panel.setState(s);
         calculate.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                doThing();
+                double[] input = s.convertToArray();
+                int out = doThing();
+                try {
+                    RegressionSum.nnThings(input,new double[]{out},eval.isSelected());
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             }
         });
 
@@ -73,8 +79,9 @@ public class Board extends JFrame implements MouseListener {
             public void run() {
                 while (true) {
                     panel.setState(s);
-                    panel.repaint();
 
+                    repaint();
+                    panel.repaint();
                     try {
                         Thread.sleep(30);
                     } catch (InterruptedException e) {
@@ -90,26 +97,23 @@ public class Board extends JFrame implements MouseListener {
 
     }
 
-    public int doThing() {
-        WinAssesment.cellState tes = s.checkWin();
-        System.out.println(tes);
-        TreeNode<State> future = WinAssesment.assessWin(s, 1);
-        System.out.println("done");
-
-        return WinAssesment.diff;
+    public State getS() {
+        return s;
     }
 
-    private List<move> played = new ArrayList<move>();
+    public int doThing() {
+        WinAssessment.cellState tes = s.checkWin();
+        System.out.println(tes);
+        TreeNode<State> future = WinAssessment.assessWin(s, 1, panel);
+
+
+        return WinAssessment.diff;
+    }
 
     public void mouseClicked(MouseEvent e) {
-        Point location = e.getPoint();
-        int unitW = getWidth() / w;
-        int col = (int) (location.getX() / unitW + 30 * 1.5);
-        int row = (int) (location.getY() / h + 30 * 1.5);
-        move m = new move(row, col, playerTurn);
-        playerTurn = -playerTurn;
-        played.add(m);
-        s.makeMove(playerTurn, (int) (location.getX() / unitW));
+
+
+
     }
 
     public void mousePressed(MouseEvent e) {
@@ -117,7 +121,23 @@ public class Board extends JFrame implements MouseListener {
     }
 
     public void mouseReleased(MouseEvent e) {
+        Point location = e.getPoint();
+        int unitW = getWidth() / w;
+        int col = (int) (location.getX() / unitW + 30 * 1.5);
+        int row = (int) (location.getY() / h + 30 * 1.5);
+        move m = new move(row, col, playerTurn);
+        playerTurn = -playerTurn;
+        played.add(m);
 
+        for (int i = 0; i < w; i++) {
+            int x = ((getWidth() - 2 * 30) / w) * (i % w) + (int) (30 * 1.5 - 0.5);
+            if (location.getX() > (x) && location.getX() < (x + 30)) {
+                s.makeMove(playerTurn, i);
+                panel.setState(s);
+                repaint();
+                break;
+            }
+        }
     }
 
     public void mouseEntered(MouseEvent e) {
@@ -127,8 +147,6 @@ public class Board extends JFrame implements MouseListener {
     public void mouseExited(MouseEvent e) {
 
     }
-
-    protected static int playerTurn = 1;
 
     class move {
         int row, col, player;
@@ -141,8 +159,8 @@ public class Board extends JFrame implements MouseListener {
     }
 
     class myPanel extends JPanel {
-        private int w, h;
         protected int size = 30;
+        private int w, h;
         private State state;
 
         public myPanel(int w, int h) {
@@ -160,12 +178,17 @@ public class Board extends JFrame implements MouseListener {
             super.paint(g);
             g.setColor(Color.black);
             for (int i = 0; i < w * h; i++) {
-                g.drawOval(((getWidth() - 2 * size) / w) * (i % w) + (int) (size * 1.5), (getWidth() - size * 2) / w * (i / w) + (int) (size * 1.5), size, size);
+                g.drawOval(((getWidth() - 2 * size) / w) * (i % w) + (int) (size * 1.5 - 0.5), (getWidth() - size * 2) / w * (i / w) + (int) (size * 1.5 - 0.5), size + 1, size + 1);
 
             }
             if (state.getW() != 0) {
                 for (int i = 0; i < h; i++) {
                     for (int j = 0; j < w; j++) {
+                        g.setColor(Color.black);
+                        int x1 = ((getWidth() - 2 * 30) / w) * (j % w) + (int) (30 * 1.5 - 0.5);
+
+                        g.drawLine((x1 - 6), (getWidth() - size * 2) / w * (i) + (int) (size * 1.5), (x1 - 6), (getWidth() - size * 2) / w * (i) + (int) (size * 2.5));
+                        g.drawLine((x1 + 36), (getWidth() - size * 2) / w * (i) + (int) (size * 1.5), (x1 + 36), (getWidth() - size * 2) / w * (i) + (int) (size * 2.5));
                         switch (state.getCellStates()[i][j]) {
                             case BLUE:
                                 g.setColor(Color.BLUE);
