@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -49,7 +50,10 @@ public class Board extends JFrame implements MouseListener {
         //layout.putConstraint(SpringLayout.EAST,calculate,buttonPanel.getWidth()/2-10,SpringLayout.EAST,buttonPanel);
         //getContentPane().add(buttonPanel,BorderLayout.NORTH);
         JFrame frame = new JFrame();
-        frame.getContentPane().add(buttonPanel);
+        //frame.getContentPane().setLayout(new FlowLayout());
+        frame.getContentPane().add(calculate, BorderLayout.NORTH);
+        final JCheckBox eval = new JCheckBox("Evaluate");
+        frame.getContentPane().add(eval, BorderLayout.SOUTH);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         getContentPane().add(panel, BorderLayout.CENTER);
@@ -61,7 +65,11 @@ public class Board extends JFrame implements MouseListener {
             public void actionPerformed(ActionEvent e) {
                 double[] input = s.convertToArray();
                 int out = doThing();
-                RegressionSum.nnThings(input,new double[]{out});
+                try {
+                    RegressionSum.nnThings(input,new double[]{out},eval.isSelected());
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             }
         });
 
