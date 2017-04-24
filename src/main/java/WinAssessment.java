@@ -9,13 +9,13 @@ import java.util.Comparator;
  * Created by itamar on 23-Mar-17.
  */
 public class WinAssessment {
-   public static boolean[] fill;
+    public static boolean[] fill;
     public static int diff = 0;
     static Board.myPanel panel;
     private static int count = 0;
     private static int countBlue = 0;
     private static int countRed = 0;
-private static int lastLine = -1;
+    private static int lastLine = -1;
 
     public static TreeNode<State> assessWin(State game, int player, Board.myPanel panel) {
         //fill = new boolean[game.getH()][game.getW()];
@@ -34,9 +34,9 @@ private static int lastLine = -1;
         //current.print();
 
 
-double r1 = (double)countBlue;
-        double r2 = (double)countRed;
-        if(Math.abs(r1-r2)> count/45 && count>25000){
+        double r1 = (double) countBlue;
+        double r2 = (double) countRed;
+        if (Math.abs(r1 - r2) > count / 45 && count > 25000) {
             return;
         }
 
@@ -66,7 +66,7 @@ double r1 = (double)countBlue;
 
                 if (next.checkWin().equals(cellState.EMPTY)) {
 
-                        formLayer(nextNode, player * (-1), parentNode);
+                    formLayer(nextNode, player * (-1), parentNode);
 
 
                 }
@@ -75,6 +75,7 @@ double r1 = (double)countBlue;
             }
         }
     }
+
     protected static enum cellState {
         BLUE, RED, EMPTY;
     }
