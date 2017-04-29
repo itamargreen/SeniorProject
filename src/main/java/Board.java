@@ -2,6 +2,7 @@ import com.diffplug.common.base.TreeNode;
 import data.BoardWinPair;
 import data.restore.RestoreRecordFile;
 import data.write.WriteToRecordsFile;
+import neuralNets.NetworkTest;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,6 +21,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     //<temporary>
     public static File dataFileDir;
     public static File recordFile;
+    public static File model;
     protected static int playerTurn = 1;
     private static List<BoardWinPair> record = new ArrayList<BoardWinPair>();
     private static String env;
@@ -32,28 +34,29 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     //</temporary>
 
 
-
-
     public Board(int w, int h) {
         //<temporary>
-        env = System.getenv("AppData")+"\\SeniorProjectDir\\";
-        dataFileDir = new File(System.getenv("AppData")+"\\SeniorProjectDir\\");
-        if(!dataFileDir.exists()){
+        env = System.getenv("AppData") + "\\SeniorProjectDir\\";
+        dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
+        if (!dataFileDir.exists()) {
             dataFileDir.mkdir();
-        }else if(!dataFileDir.isDirectory()){
+        } else if (!dataFileDir.isDirectory()) {
             dataFileDir.delete();
-            dataFileDir = new File(System.getenv("AppData")+"\\SeniorProjectDir\\");
+            dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
             dataFileDir.mkdir();
         }
-        recordFile = new File(env+"\\records.txt");
-        if(!recordFile.exists()){
+        recordFile = new File(env + "\\records.txt");
+        if (!recordFile.exists()) {
             try {
                 recordFile.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        List<BoardWinPair> readingList =  RestoreRecordFile.readRecords(recordFile);
+        model = new File(env + "\\model.zip");
+        //NetworkTest.loadNet(model);
+
+        List<BoardWinPair> readingList = RestoreRecordFile.readRecords(recordFile);
         Board.record = readingList;
 
         //</temporary>
@@ -104,30 +107,65 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         SpringLayout layout = new SpringLayout();
         container.setLayout(layout);
 
+        final JCheckBox eval = new JCheckBox("Evaluate");
 
         JButton useRecords = new JButton("Use Records");
+        useRecords.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                NetworkTest.firstNeuralTest(record, w * h, model);
+            }
+        });
+        container.add(useRecords);
+
+        JButton loadNet = new JButton("Load NN");
+        loadNet.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (model.exists())
+                    NetworkTest.loadNN(model);
+            }
+        });
+        container.add(loadNet);
+
         JButton calculate = new JButton("Foresee");
         calculate.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                double[] input = s.convertToArray();
-                long tick = System.currentTimeMillis();
-                int out = doThing();
-                long tock = System.currentTimeMillis();
-                long distance = tock-tick;
-                BoardWinPair pair = new BoardWinPair(input, out);
+                if (s.checkWin().equals(CellState.EMPTY)) {
+                    double[] input = s.convertToArray();
+                    long tick = System.currentTimeMillis();
+                    int out = doThing();
+                    long tock = System.currentTimeMillis();
+                    long distance = tock - tick;
+                    BoardWinPair pair = new BoardWinPair(input, out);
+                    if (eval.isSelected()) {
+                        NetworkTest.testNetwork(pair);
+                    }
 
 
-                record.add(pair);
-                whenAddingRecord.setText("now has "+record.size()+" records");
+                    record.add(pair);
+                    whenAddingRecord.setText("now has " + record.size() + " records");
+                }
+
 
             }
         });
 
-        final JCheckBox eval = new JCheckBox("Evaluate");
-        container.add(useRecords);
+        JButton writeToFile = new JButton("Write to file");
+        writeToFile.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                WriteToRecordsFile.writeRecords(record, recordFile);
+                JOptionPane.showMessageDialog(null, "Done");
+            }
+        });
+
+
         container.add(calculate);
         container.add(eval);
         container.add(whenAddingRecord);
+        container.add(writeToFile);
+
         layout.putConstraint(SpringLayout.WEST, calculate, 20, SpringLayout.WEST, container);
         layout.putConstraint(SpringLayout.NORTH, calculate, 10, SpringLayout.NORTH, container);
         layout.putConstraint(SpringLayout.WEST, useRecords, 10, SpringLayout.EAST, calculate);
@@ -136,14 +174,19 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         layout.putConstraint(SpringLayout.NORTH, eval, 0, SpringLayout.NORTH, useRecords);
         layout.putConstraint(SpringLayout.WEST, whenAddingRecord, 0, SpringLayout.WEST, calculate);
         layout.putConstraint(SpringLayout.NORTH, whenAddingRecord, 10, SpringLayout.SOUTH, calculate);
-        frame.setPreferredSize(new Dimension(350, 100));
+        layout.putConstraint(SpringLayout.WEST, writeToFile, 0, SpringLayout.EAST, whenAddingRecord);
+        layout.putConstraint(SpringLayout.NORTH, writeToFile, 7, SpringLayout.SOUTH, calculate);
+        layout.putConstraint(SpringLayout.WEST, loadNet, 0, SpringLayout.WEST, whenAddingRecord);
+        layout.putConstraint(SpringLayout.NORTH, loadNet, 15, SpringLayout.SOUTH, whenAddingRecord);
+
+        frame.setPreferredSize(new Dimension(350, 200));
         double x = getContentPane().getLocationOnScreen().getX() + (w * 50 + 100);
         double y = getContentPane().getLocationOnScreen().getY() + 10;
         frame.setLocation((int) (x + 10), (int) y);
         frame.pack();
 
-        if(record.size()!=0){
-            whenAddingRecord.setText("now has "+record.size()+" records");
+        if (record.size() != 0) {
+            whenAddingRecord.setText("now has " + record.size() + " records");
         }
 
 
@@ -214,9 +257,10 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     public void windowClosing(WindowEvent e) {
 
-        WriteToRecordsFile.writeRecords(record,recordFile);
+        //WriteToRecordsFile.writeRecords(record, recordFile);
         System.exit(0);
     }
+
     public void windowOpened(WindowEvent e) {
 
     }
