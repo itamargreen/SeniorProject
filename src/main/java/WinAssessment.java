@@ -36,7 +36,7 @@ private static int lastLine = -1;
 
 double r1 = (double)countBlue;
         double r2 = (double)countRed;
-        if(Math.abs(r1-r2)> count/45 && count>25000){
+        if(Math.abs(r1-r2)> count/45 && count>250000){
             return;
         }
 

@@ -6,10 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.Stack;
 
 /**
@@ -22,6 +20,7 @@ public class Board extends JFrame implements MouseListener {
     private int w, h;
     private State s;
     private List<move> played = new ArrayList<move>();
+    private List<BoardWinPair> record = new ArrayList<BoardWinPair>();
 
     public Board(int w, int h) {
         this.w = w;
@@ -32,28 +31,30 @@ public class Board extends JFrame implements MouseListener {
             boardStacks[i] = new Stack<Integer>();
             boardStacks[i].setSize(h);
         }
-        setSize(w*50+100, h*50+100);
+        setSize(w * 50 + 100, h * 50 + 100);
         panel = new myPanel(w, h);
-
-        JPanel buttonPanel = new JPanel();
-
-        JButton calculate = new JButton("Foresee");
-        buttonPanel.add(calculate);
-
-        SpringLayout layout = new SpringLayout();
-        buttonPanel.setLayout(layout);
-
-
-        //layout.putConstraint(SpringLayout.EAST,calculate,buttonPanel.getWidth()/2-10,SpringLayout.EAST,buttonPanel);
-        layout.putConstraint(SpringLayout.WEST, calculate, buttonPanel.getWidth() / 2, SpringLayout.WEST, buttonPanel);
-        layout.putConstraint(SpringLayout.NORTH, calculate, 10, SpringLayout.NORTH, buttonPanel);
-        //layout.putConstraint(SpringLayout.EAST,calculate,buttonPanel.getWidth()/2-10,SpringLayout.EAST,buttonPanel);
-        //getContentPane().add(buttonPanel,BorderLayout.NORTH);
         JFrame frame = new JFrame();
-        //frame.getContentPane().setLayout(new FlowLayout());
-        frame.getContentPane().add(calculate, BorderLayout.NORTH);
+        Container container = frame.getContentPane();
+        SpringLayout layout = new SpringLayout();
+        container.setLayout(layout);
+
+        JButton useRecords = new JButton("Use Records");
+        JButton calculate = new JButton("Foresee");
         final JCheckBox eval = new JCheckBox("Evaluate");
-        frame.getContentPane().add(eval, BorderLayout.SOUTH);
+        container.add(useRecords);
+        container.add(calculate);
+container.add(eval);
+        layout.putConstraint(SpringLayout.WEST, calculate, 20, SpringLayout.WEST, container);
+        layout.putConstraint(SpringLayout.NORTH, calculate, 10, SpringLayout.NORTH, container);
+        layout.putConstraint(SpringLayout.WEST, useRecords, 10, SpringLayout.EAST, calculate);
+        layout.putConstraint(SpringLayout.NORTH, useRecords, 0, SpringLayout.NORTH, calculate);
+        layout.putConstraint(SpringLayout.WEST, eval, 10, SpringLayout.EAST, calculate);
+        layout.putConstraint(SpringLayout.NORTH, useRecords, 0, SpringLayout.NORTH, calculate);
+
+
+
+        frame.setPreferredSize(new Dimension(300,100));
+        frame.pack();
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         getContentPane().add(panel, BorderLayout.CENTER);
@@ -65,14 +66,12 @@ public class Board extends JFrame implements MouseListener {
             public void actionPerformed(ActionEvent e) {
                 double[] input = s.convertToArray();
                 int out = doThing();
-                try {
-                    RegressionSum.nnThings(input,new double[]{out},eval.isSelected());
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+                BoardWinPair pair = new BoardWinPair(input, out);
+                record.add(pair);
+
             }
         });
-
+        setLocationRelativeTo(null);
         setVisible(true);
         addMouseListener(this);
         Thread gameThread = new Thread(new Runnable() {
@@ -111,7 +110,6 @@ public class Board extends JFrame implements MouseListener {
     }
 
     public void mouseClicked(MouseEvent e) {
-
 
 
     }
