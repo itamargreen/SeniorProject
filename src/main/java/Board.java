@@ -124,13 +124,14 @@ container.add(eval);
         int col = (int) (location.getX() / unitW + 30 * 1.5);
         int row = (int) (location.getY() / h + 30 * 1.5);
         move m = new move(row, col, playerTurn);
-        playerTurn = -playerTurn;
-        played.add(m);
+
 
         for (int i = 0; i < w; i++) {
             int x = ((getWidth() - 2 * 30) / w) * (i % w) + (int) (30 * 1.5 - 0.5);
             if (location.getX() > (x) && location.getX() < (x + 30)) {
                 s.makeMove(playerTurn, i);
+                playerTurn = -playerTurn;
+                played.add(m);
                 panel.setState(s);
                 repaint();
                 break;

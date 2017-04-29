@@ -100,27 +100,6 @@ public class State {
         }
     }
 
-//    @Override
-//    public String toString() {
-//        StringBuilder sb = new StringBuilder();
-//        for (int i = 0; i < h; i++) {
-//            for (int j = 0; j < w; j++) {
-//                sb.append(cellStates[i][j].name() + "\t");
-//            }
-//            sb.append("\n");
-//        }
-//        try {
-//            FileWriter fw = new FileWriter(new File("E:\\Users\\itamar\\Desktop\\test.txt"));
-//            fw.write(sb.toString());
-//            fw.flush();
-//            fw.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//
-//        return sb.toString();
-//    }
 
     public double[] convertToArray() {
         List<Double> temp = new ArrayList<Double>();
