@@ -1,9 +1,13 @@
 import com.diffplug.common.base.TreeNode;
 import data.BoardWinPair;
+import data.restore.RestoreRecordFile;
+import data.write.WriteToRecordsFile;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -13,16 +17,47 @@ import java.util.Stack;
  */
 public class Board extends JFrame implements MouseListener, WindowListener {
     public static Stack<Integer>[] boardStacks;
+    //<temporary>
+    public static File dataFileDir;
+    public static File recordFile;
     protected static int playerTurn = 1;
     private static List<BoardWinPair> record = new ArrayList<BoardWinPair>();
+    private static String env;
     private myPanel panel;
     private int w, h;
     private State s;
     private List<move> played = new ArrayList<move>();
     private JFrame frame = new JFrame();
+    private JLabel whenAddingRecord = new JLabel("waiting...");
+    //</temporary>
+
+
 
 
     public Board(int w, int h) {
+        //<temporary>
+        env = System.getenv("AppData")+"\\SeniorProjectDir\\";
+        dataFileDir = new File(System.getenv("AppData")+"\\SeniorProjectDir\\");
+        if(!dataFileDir.exists()){
+            dataFileDir.mkdir();
+        }else if(!dataFileDir.isDirectory()){
+            dataFileDir.delete();
+            dataFileDir = new File(System.getenv("AppData")+"\\SeniorProjectDir\\");
+            dataFileDir.mkdir();
+        }
+        recordFile = new File(env+"\\records.txt");
+        if(!recordFile.exists()){
+            try {
+                recordFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        List<BoardWinPair> readingList =  RestoreRecordFile.readRecords(recordFile);
+        Board.record = readingList;
+
+        //</temporary>
+
         this.w = w;
         this.h = h;
         s = new State(w, h);
@@ -62,12 +97,13 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         gameThread.start();
 
 
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-
+        //setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        addWindowListener(this);
 
         Container container = frame.getContentPane();
         SpringLayout layout = new SpringLayout();
         container.setLayout(layout);
+
 
         JButton useRecords = new JButton("Use Records");
         JButton calculate = new JButton("Foresee");
@@ -82,6 +118,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
 
                 record.add(pair);
+                whenAddingRecord.setText("now has "+record.size()+" records");
 
             }
         });
@@ -90,18 +127,28 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         container.add(useRecords);
         container.add(calculate);
         container.add(eval);
+        container.add(whenAddingRecord);
         layout.putConstraint(SpringLayout.WEST, calculate, 20, SpringLayout.WEST, container);
         layout.putConstraint(SpringLayout.NORTH, calculate, 10, SpringLayout.NORTH, container);
         layout.putConstraint(SpringLayout.WEST, useRecords, 10, SpringLayout.EAST, calculate);
         layout.putConstraint(SpringLayout.NORTH, useRecords, 0, SpringLayout.NORTH, calculate);
         layout.putConstraint(SpringLayout.WEST, eval, 10, SpringLayout.EAST, useRecords);
         layout.putConstraint(SpringLayout.NORTH, eval, 0, SpringLayout.NORTH, useRecords);
+        layout.putConstraint(SpringLayout.WEST, whenAddingRecord, 0, SpringLayout.WEST, calculate);
+        layout.putConstraint(SpringLayout.NORTH, whenAddingRecord, 10, SpringLayout.SOUTH, calculate);
         frame.setPreferredSize(new Dimension(350, 100));
         double x = getContentPane().getLocationOnScreen().getX() + (w * 50 + 100);
         double y = getContentPane().getLocationOnScreen().getY() + 10;
         frame.setLocation((int) (x + 10), (int) y);
         frame.pack();
+
+        if(record.size()!=0){
+            whenAddingRecord.setText("now has "+record.size()+" records");
+        }
+
+
         frame.setVisible(true);
+
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
     }
@@ -167,6 +214,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     public void windowClosing(WindowEvent e) {
 
+        WriteToRecordsFile.writeRecords(record,recordFile);
+        System.exit(0);
     }
     public void windowOpened(WindowEvent e) {
 
