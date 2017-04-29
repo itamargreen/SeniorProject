@@ -19,12 +19,16 @@ public class WinAssessment {
 
     public static TreeNode<State> assessWin(State game, int player, Board.myPanel panel) {
         //fill = new boolean[game.getH()][game.getW()];
-
+        count = 0;
+        countBlue = 0;
+        countRed = 0;
         State clone = new State(game);
         WinAssessment.panel = panel;
         TreeNode<State> futureStates = new TreeNode<State>(null, game, game.getW());
         formLayer(futureStates, player, futureStates);
         diff = (countBlue - countRed) * player;
+        System.out.println(Math.abs(countBlue-countRed)+" divided by "+ count/10);
+        System.out.println(diff);
         return futureStates;
 
     }
@@ -37,15 +41,15 @@ public class WinAssessment {
 
         double r1 = (double)countBlue;
         double r2 = (double)countRed;
-        if(Math.abs(r1-r2)> count/45 && count>250000){
+        if(Math.abs(r1-r2)> count/10 && count>500000){
 
             return;
         }
-
-        if (count > 500000 /* || (Math.abs(countBlue-countRed)/(double)Math.max(countBlue,countRed))>0.75*/) {
-            return;
-        }
-        if (!node.getContent().checkWin().equals(cellState.EMPTY)) {
+//
+//        if (count > 500000 /* || (Math.abs(countBlue-countRed)/(double)Math.max(countBlue,countRed))>0.75*/) {
+//            return;
+//        }
+        if (!node.getContent().checkWin().equals(CellState.EMPTY)) {
             return;
         } else {
             for (int i = 0; i < current.getW(); i++) {
@@ -55,7 +59,7 @@ public class WinAssessment {
                     return;
                 }
                 count++;
-                if (!next.checkWin().equals(cellState.EMPTY)) {
+                if (!next.checkWin().equals(CellState.EMPTY)) {
                     switch (next.checkWin()) {
                         case BLUE:
                             countBlue++;
@@ -66,7 +70,7 @@ public class WinAssessment {
                 }
                 TreeNode<State> nextNode = new TreeNode<State>(node, next, next.getW());
 
-                if (next.checkWin().equals(cellState.EMPTY)) {
+                if (next.checkWin().equals(CellState.EMPTY)) {
 
                     formLayer(nextNode, player * (-1), parentNode);
 
@@ -78,7 +82,5 @@ public class WinAssessment {
         }
     }
 
-    protected static enum cellState {
-        BLUE, RED, EMPTY;
-    }
+
 }
