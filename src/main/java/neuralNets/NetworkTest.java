@@ -26,7 +26,7 @@ import java.util.Random;
 public class NetworkTest {
     public static final int seed = 12345;
     //Number of iterations per minibatch
-    public static final int iterations = 1;
+    public static final int iterations = 30;
     //Number of epochs (full passes of the data)
     public static final int nEpochs = 200;
     //Number of data points
@@ -47,7 +47,7 @@ public class NetworkTest {
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .learningRate(learningRate)
                 .weightInit(WeightInit.XAVIER)
-                .updater(Updater.NESTEROVS).momentum(0.9)
+
                 .list()
                 .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
                         .activation(Activation.TANH)
@@ -62,24 +62,54 @@ public class NetworkTest {
         );
         net.init();
         net.setListeners(new ScoreIterationListener(1));
-        double[][] inputData = new double[5][3];
-        inputData[0] = new double[]{1.0, 3.0, 3.0};//true
-        inputData[1] = new double[]{10.0, 3.0, 30.0};//true
-        inputData[2] = new double[]{4.0, 3.5, 14.0};//true
-        inputData[3] = new double[]{2.0, 3.0, 6.5};//false
-        inputData[4] = new double[]{2.0, 8.0, 13.0};//false
+        double[][] inputData = new double[500][3];
+        double[][] outputData = new double[500][1];
+        Random rngg = new Random(12345);
 
-        double[] outputData = new double[]{1.0, 1.0, 1.0, -1.0, -1.0};
+        INDArray labels = Nd4j.create(new double[]{-1.00, 1.00});
+        net.setLabels(labels);
+
+
+        for (int i = 0; i < inputData.length / 2; i++) {
+            double num1 = rngg.nextDouble() * 20.0 - 10.0;
+            double num2 = rngg.nextDouble() * 20.0 - 10.0;
+
+            double third = num1 + num2;
+            double[] arrTemp = {num1, num2, third};
+            inputData[i] = arrTemp;
+            outputData[i] = new double[]{1.00};
+        }
+        for (int i = inputData.length / 2; i < inputData.length; i++) {
+            double num1 = rngg.nextDouble() * 20.0 - 10.0;
+            double num2 = rngg.nextDouble() * 20.0 - 10.0;
+            double num3 = rngg.nextDouble() * 40.0 - 20.0;
+
+            double[] arrTemp = {num1, num2, num3};
+            inputData[i] = arrTemp;
+            outputData[i] = new double[]{-1.00};
+        }
+
+
         INDArray input = Nd4j.create(inputData);
         INDArray output = Nd4j.create(outputData);
         DataSet dataSet = new DataSet(input, output);
-        List<DataSet> dataSetList = dataSet.asList();
-        //Collections.shuffle(dataSetList);
-
-        net.fit(input, new int[]{1, 1, 1, -1, -1});
-        double[] test = new double[]{10.0, 3.5, 35.0};
+        List<DataSet> list = dataSet.asList();
+        Collections.shuffle(list);
+        Collections.shuffle(list);
+        Collections.shuffle(list);
+        DataSetIterator iterator = new ListDataSetIterator(list, 3);
+        int epoch = 0;
+        do {
+            iterator.reset();
+            net.fit(iterator);
+            epoch++;
+        } while (epoch < iterations + 1);
+        double[] test = new double[]{10.0, 3.5, 13.5};
+        double[] test2 = inputData[260];
         INDArray testArray = Nd4j.create(test);
+        INDArray testArray2 = Nd4j.create(test2);
         INDArray outputarray = net.output(testArray);
+        INDArray outputarray2 = net.output(testArray2);
         System.out.println("hei");
     }
 }
