@@ -1,14 +1,15 @@
 package neuralNets;
 
+import data.BoardWinPair;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
@@ -16,6 +17,8 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -36,58 +39,89 @@ public class NetworkTest {
     //Network learning rate
     public static final double learningRate = 0.01;
     public static final Random rng = new Random(seed);
+    private static MultiLayerNetwork net = null;
+    private static boolean flag = false;
 
-    public static void main(String[] args) {
-        int numInput = 3;
-        int nHidden = 50;
+    public static MultiLayerNetwork getNet() {
+        return net;
+    }
+
+    public static void loadNN(File model) {
+        try {
+            MultiLayerNetwork restored = ModelSerializer.restoreMultiLayerNetwork(model);
+            net = restored.clone();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void firstNeuralTest(List<BoardWinPair> records, int totalSize, File model) {
+        int numInput = totalSize;
+        int nHidden = totalSize * 2;
         int numOutputs = 1;
-        MultiLayerNetwork net = new MultiLayerNetwork(new NeuralNetConfiguration.Builder()
-                .seed(seed)
-                .iterations(iterations)
-                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .learningRate(learningRate)
-                .weightInit(WeightInit.XAVIER)
+        if (net == null) {
+            net = new MultiLayerNetwork(new NeuralNetConfiguration.Builder()
+                    .seed(seed)
+                    .iterations(iterations)
+                    .optimizationAlgo(OptimizationAlgorithm.LBFGS)
+                    .learningRate(learningRate)
+                    .weightInit(WeightInit.XAVIER)
 
-                .list()
-                .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-                        .activation(Activation.TANH)
-                        .build())
-                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
-                        .activation(Activation.TANH)
-                        .build())
-                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                        .activation(Activation.IDENTITY)
-                        .nIn(nHidden).nOut(numOutputs).build())
-                .pretrain(false).backprop(true).build()
-        );
-        net.init();
-        net.setListeners(new ScoreIterationListener(1));
-        double[][] inputData = new double[500][3];
-        double[][] outputData = new double[500][1];
-        Random rngg = new Random(12345);
+                    .list()
+                    .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
+                            .activation(Activation.SOFTMAX)
+                            .build())
+                    .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3)
+                            .activation(Activation.RELU)
+                            .build())
+                    .layer(2, new DenseLayer.Builder().nIn(nHidden / 3).nOut((nHidden / 3) * 2)
+                            .activation(Activation.RELU)
+                            .build())
 
-        INDArray labels = Nd4j.create(new double[]{-1.00, 1.00});
-        net.setLabels(labels);
+                    .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                            .activation(Activation.IDENTITY)
+                            .nIn((nHidden / 3) * 2).nOut(numOutputs).build())
+                    .pretrain(false).backprop(true).build()
+            );
 
-
-        for (int i = 0; i < inputData.length / 2; i++) {
-            double num1 = rngg.nextDouble() * 20.0 - 10.0;
-            double num2 = rngg.nextDouble() * 20.0 - 10.0;
-
-            double third = num1 + num2;
-            double[] arrTemp = {num1, num2, third};
-            inputData[i] = arrTemp;
-            outputData[i] = new double[]{1.00};
+            net.init();
+            net.setListeners(new ScoreIterationListener(1));
         }
-        for (int i = inputData.length / 2; i < inputData.length; i++) {
-            double num1 = rngg.nextDouble() * 20.0 - 10.0;
-            double num2 = rngg.nextDouble() * 20.0 - 10.0;
-            double num3 = rngg.nextDouble() * 40.0 - 20.0;
 
-            double[] arrTemp = {num1, num2, num3};
-            inputData[i] = arrTemp;
-            outputData[i] = new double[]{-1.00};
+
+        double[][] inputData = new double[records.size()][totalSize];
+        double[][] outputData = new double[records.size()][1];
+
+        for (int i = 0; i < inputData.length; i++) {
+            inputData[i] = records.get(i).getBoard();
+            outputData[i] = new double[]{(double) records.get(i).getOutcome()};
         }
+
+//        double[][] inputData = new double[100][3];
+//        double[][] outputData = new double[100][1];
+//        Random rngg = new Random(12345);
+//
+//
+//
+//
+//        for (int i = 0; i < inputData.length / 2; i++) {
+//            double num1 = rngg.nextDouble() * 20.0 - 10.0;
+//            double num2 = rngg.nextDouble() * 20.0 - 10.0;
+//
+//            double third = num1 + num2;
+//            double[] arrTemp = {num1, num2, third};
+//            inputData[i] = arrTemp;
+//            outputData[i] = new double[]{1.00};
+//        }
+//        for (int i = inputData.length / 2; i < inputData.length; i++) {
+//            double num1 = rngg.nextDouble() * 20.0 - 10.0;
+//            double num2 = rngg.nextDouble() * 20.0 - 10.0;
+//            double num3 = rngg.nextDouble() * 40.0 - 20.0;
+//
+//            double[] arrTemp = {num1, num2, num3};
+//            inputData[i] = arrTemp;
+//            outputData[i] = new double[]{-1.00};
+//        }
 
 
         INDArray input = Nd4j.create(inputData);
@@ -98,18 +132,41 @@ public class NetworkTest {
         Collections.shuffle(list);
         Collections.shuffle(list);
         DataSetIterator iterator = new ListDataSetIterator(list, 3);
+        System.out.println("start training");
         int epoch = 0;
         do {
             iterator.reset();
             net.fit(iterator);
+
             epoch++;
         } while (epoch < iterations + 1);
-        double[] test = new double[]{10.0, 3.5, 13.5};
-        double[] test2 = inputData[260];
-        INDArray testArray = Nd4j.create(test);
-        INDArray testArray2 = Nd4j.create(test2);
-        INDArray outputarray = net.output(testArray);
-        INDArray outputarray2 = net.output(testArray2);
-        System.out.println("hei");
+
+
+        try {
+            ModelSerializer.writeModel(net, model, true);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    public static double testNetwork(BoardWinPair pair) {
+        if (net == null) {
+            return 0.0;
+        }
+        double[][] inputData = new double[1][pair.getBoard().length];
+        double[][] outputData = new double[1][1];
+        inputData[0] = pair.getBoard();
+        outputData[0] = new double[]{pair.getOutcome()};
+        INDArray input = Nd4j.create(inputData);
+
+        INDArray output = net.output(input, false);
+        if(output.isScalar()){
+            
+        }
+        return 0.0;
+
     }
 }

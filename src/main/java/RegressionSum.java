@@ -48,7 +48,7 @@ public class RegressionSum {
         MultiLayerNetwork net;
         if (!locationToSave.exists()) {
             //Create the network
-            int numInput = 70;
+            int numInput = 16;
             int numOutputs = 1;
             int nHidden = 100;
             net = new MultiLayerNetwork(new NeuralNetConfiguration.Builder()
