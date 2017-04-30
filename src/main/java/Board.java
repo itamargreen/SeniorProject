@@ -128,6 +128,17 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         });
         container.add(loadNet);
 
+        JButton discardList = new JButton("new data");
+        discardList.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                record = new ArrayList<>();
+                whenAddingRecord.setText("now has " + record.size() + " records");
+            }
+        });
+        container.add(discardList);
+
+
         JButton calculate = new JButton("Foresee");
         calculate.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -178,6 +189,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         layout.putConstraint(SpringLayout.NORTH, writeToFile, 7, SpringLayout.SOUTH, calculate);
         layout.putConstraint(SpringLayout.WEST, loadNet, 0, SpringLayout.WEST, whenAddingRecord);
         layout.putConstraint(SpringLayout.NORTH, loadNet, 15, SpringLayout.SOUTH, whenAddingRecord);
+        layout.putConstraint(SpringLayout.WEST, discardList, 15, SpringLayout.EAST, loadNet);
+        layout.putConstraint(SpringLayout.NORTH, discardList, 0, SpringLayout.NORTH, loadNet);
 
         frame.setPreferredSize(new Dimension(350, 200));
         double x = getContentPane().getLocationOnScreen().getX() + (w * 50 + 100);
@@ -204,7 +217,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         CellState tes = s.checkWin();
         System.out.println(tes);
         TreeNode<State> future = WinAssessment.assessWin(s, 1, panel);
-        return WinAssessment.diff;
+        return (int)WinAssessment.diff;
     }
 
     @Override

@@ -146,48 +146,48 @@ public class State {
                 CellState temp = cellStates[i][j];
                 if (temp == CellState.EMPTY)
                     continue;
-                if (j < w - 2) {
-                    if (cellStates[i][j + 1] == temp && cellStates[i][j + 2] == temp) {
-                        return temp;
-                    }
-                    if (i < h - 2) {
-                        if (cellStates[i + 1][j + 1] == temp && cellStates[i + 2][j + 2] == temp) {
-                            return temp;
-                        }
-                    }
-                }
-                if (i < h - 2) {
-                    if (cellStates[i + 1][j] == temp && cellStates[i + 2][j] == temp) {
-                        return temp;
-                    }
-                }
-                if (i > 2 && j < w - 2) {
-                    if (cellStates[i - 1][j + 1] == temp && cellStates[i - 2][j + 2] == temp) {
-                        return temp;
-                    }
-                }
-
-
-//                if (j < w - 3) {
-//                    if (cellStates[i][j + 1] == temp && cellStates[i][j + 2] == temp && cellStates[i][j + 3] == temp) {
+//                if (j < w - 2) {
+//                    if (cellStates[i][j + 1] == temp && cellStates[i][j + 2] == temp) {
 //                        return temp;
 //                    }
-//                    if (i < h - 3) {
-//                        if (cellStates[i + 1][j + 1] == temp && cellStates[i + 2][j + 2] == temp && cellStates[i + 3][j + 3] == temp) {
+//                    if (i < h - 2) {
+//                        if (cellStates[i + 1][j + 1] == temp && cellStates[i + 2][j + 2] == temp) {
 //                            return temp;
 //                        }
 //                    }
 //                }
-//                if (i < h - 3) {
-//                    if (cellStates[i + 1][j] == temp && cellStates[i + 2][j] == temp && cellStates[i + 3][j] == temp) {
+//                if (i < h - 2) {
+//                    if (cellStates[i + 1][j] == temp && cellStates[i + 2][j] == temp) {
 //                        return temp;
 //                    }
 //                }
-//                if (i > 3 && j < w - 3) {
-//                    if (cellStates[i - 1][j + 1] == temp && cellStates[i - 2][j + 2] == temp && cellStates[i - 3][j + 3] == temp) {
+//                if (i > 2 && j < w - 2) {
+//                    if (cellStates[i - 1][j + 1] == temp && cellStates[i - 2][j + 2] == temp) {
 //                        return temp;
 //                    }
 //                }
+
+
+                if (j < w - 3) {
+                    if (cellStates[i][j + 1] == temp && cellStates[i][j + 2] == temp && cellStates[i][j + 3] == temp) {
+                        return temp;
+                    }
+                    if (i < h - 3) {
+                        if (cellStates[i + 1][j + 1] == temp && cellStates[i + 2][j + 2] == temp && cellStates[i + 3][j + 3] == temp) {
+                            return temp;
+                        }
+                    }
+                }
+                if (i < h - 3) {
+                    if (cellStates[i + 1][j] == temp && cellStates[i + 2][j] == temp && cellStates[i + 3][j] == temp) {
+                        return temp;
+                    }
+                }
+                if (i > 3 && j < w - 3) {
+                    if (cellStates[i - 1][j + 1] == temp && cellStates[i - 2][j + 2] == temp && cellStates[i - 3][j + 3] == temp) {
+                        return temp;
+                    }
+                }
 
             }
         }
