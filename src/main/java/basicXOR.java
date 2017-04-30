@@ -36,7 +36,7 @@ public class basicXOR {
             f.mkdir();
         }
 
-        b = new Board(5, 5);
+        b = new Board(7, 6);
 
     }
 }

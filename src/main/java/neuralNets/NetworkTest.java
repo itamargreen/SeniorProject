@@ -163,9 +163,8 @@ public class NetworkTest {
         INDArray input = Nd4j.create(inputData);
 
         INDArray output = net.output(input, false);
-        if(output.isScalar()){
-            
-        }
+        //TODO: fix this
+        //FIXME: please
         return 0.0;
 
     }
