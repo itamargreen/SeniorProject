@@ -1,3 +1,5 @@
+package ManualGame;
+
 import GameObjects.CellState;
 import GameObjects.State;
 import com.diffplug.common.base.TreeNode;
@@ -5,6 +7,8 @@ import GameObjects.BoardWinPair;
 import data.restore.RestoreRecordFile;
 import data.write.WriteToRecordsFile;
 import neuralNets.NetworkTest;
+import bruteForceCalculation.*;
+
 
 import javax.swing.*;
 import java.awt.*;
@@ -218,8 +222,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     public int doThing() {
         CellState tes = s.checkWin();
         System.out.println(tes);
-        TreeNode<State> future = WinAssessment.assessWin(s, 1, panel);
-        return (int)WinAssessment.diff;
+        TreeNode<State> future = WinAssessment.assessWin(s, 1);
+        return (int) WinAssessment.diff;
     }
 
     @Override

@@ -1,7 +1,8 @@
-
+package bruteForceCalculation;
 
 import GameObjects.CellState;
 import GameObjects.State;
+import ManualGame.Board;
 import com.diffplug.common.base.TreeNode;
 
 /**
@@ -10,19 +11,19 @@ import com.diffplug.common.base.TreeNode;
 public class WinAssessment {
     public static boolean[] fill;
     public static double diff = 0;
-    static Board.myPanel panel;
+
     private static int count = 0;
     private static double countBlue = 0;
     private static double countRed = 0;
     private static int lastLine = -1;
 
-    public static TreeNode<State> assessWin(State game, int player, Board.myPanel panel) {
+    public static TreeNode<State> assessWin(State game, int player) {
         //fill = new boolean[game.getH()][game.getW()];
         count = 0;
         countBlue = 0;
         countRed = 0;
 
-        WinAssessment.panel = panel;
+
         TreeNode<State> futureStates = new TreeNode<State>(null, game, game.getW());
         formLayer(futureStates, player, futureStates, 1);
         diff = (countBlue - countRed);
