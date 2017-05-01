@@ -1,6 +1,6 @@
 package data.write;
 
-import data.BoardWinPair;
+import GameObjects.BoardWinPair;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,7 +23,7 @@ public class WriteToRecordsFile {
 
             for (BoardWinPair pair : records) {
                 double[] input = pair.getBoard();
-                int out = pair.getOutcome();
+                double out = pair.getOutcome();
                 String line = Arrays.toString(input);
                 line = line.replaceAll("\\[", "");
                 line = line.replaceAll("\\]", "");

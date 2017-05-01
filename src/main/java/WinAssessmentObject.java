@@ -1,5 +1,7 @@
 
 
+import GameObjects.CellState;
+import GameObjects.State;
 import com.diffplug.common.base.TreeNode;
 
 /**

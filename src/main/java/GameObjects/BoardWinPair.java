@@ -1,4 +1,4 @@
-package data;
+package GameObjects;
 
 /**
  * Created by User on 18-Apr-17.
@@ -6,9 +6,9 @@ package data;
 public class BoardWinPair {
 
     private double[] board;
-    private int outcome;
+    private double outcome;
 
-    public BoardWinPair(double[] board, int outcome) {
+    public BoardWinPair(double[] board, double outcome) {
         this.board = board;
         this.outcome = outcome;
     }
@@ -21,11 +21,11 @@ public class BoardWinPair {
         this.board = board;
     }
 
-    public int getOutcome() {
+    public double getOutcome() {
         return outcome;
     }
 
-    public void setOutcome(int outcome) {
+    public void setOutcome(double outcome) {
         this.outcome = outcome;
     }
 }

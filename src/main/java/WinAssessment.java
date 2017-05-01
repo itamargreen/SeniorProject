@@ -1,5 +1,7 @@
 
 
+import GameObjects.CellState;
+import GameObjects.State;
 import com.diffplug.common.base.TreeNode;
 
 /**
@@ -38,7 +40,7 @@ public class WinAssessment {
 //        double r1 = countBlue;
 //        double r2 = countRed;
         //double temp = Math.abs(r1 - r2) / Math.max(countBlue, countRed);
-        if (/*(Math.abs(r1-r2)/Math.max(countBlue,countRed)> 0.35 && count>1000000 )|| */count > 500000) {
+        if (/*(Math.abs(r1-r2)/Math.max(countBlue,countRed)> 0.35 && count>1000000 )|| */count > 700000) {
 
             return;
         }

@@ -1,6 +1,6 @@
 package neuralNets;
 
-import data.BoardWinPair;
+import GameObjects.BoardWinPair;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -94,7 +94,7 @@ public class NetworkTest {
 
         for (int i = 0; i < inputData.length; i++) {
             inputData[i] = records.get(i).getBoard();
-            outputData[i] = new double[]{(double) records.get(i).getOutcome()};
+            outputData[i] = new double[]{records.get(i).getOutcome()};
         }
 
 //        double[][] inputData = new double[100][3];
@@ -131,7 +131,7 @@ public class NetworkTest {
         Collections.shuffle(list);
         Collections.shuffle(list);
         Collections.shuffle(list);
-        DataSetIterator iterator = new ListDataSetIterator(list, 3);
+        DataSetIterator iterator = new ListDataSetIterator(list, records.size());
         System.out.println("start training");
         int epoch = 0;
         do {

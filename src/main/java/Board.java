@@ -1,5 +1,7 @@
+import GameObjects.CellState;
+import GameObjects.State;
 import com.diffplug.common.base.TreeNode;
-import data.BoardWinPair;
+import GameObjects.BoardWinPair;
 import data.restore.RestoreRecordFile;
 import data.write.WriteToRecordsFile;
 import neuralNets.NetworkTest;
