@@ -1,5 +1,6 @@
 package ManualGame;
 
+import GameObjects.BoardColumnPair;
 import GameObjects.CellState;
 import GameObjects.State;
 import MoveMaker.BoardNetworkCoordinator;
@@ -35,9 +36,10 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     private myPanel panel;
     private int w, h;
     private State s;
-    private List<move> played = new ArrayList<move>();
+
     private JFrame frame = new JFrame();
     private JLabel whenAddingRecord = new JLabel("waiting...");
+    private JLabel player = new JLabel("currently: ");
 
 
     public File getDataFileDir() {
@@ -97,14 +99,13 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     }
 
     /**
-     *
-     * @param w - Board width
-     * @param h - Board height
-     * @param env - Game data folder path
-     * @param dataFileDir - Game data file
-     * @param recordFile - Training data for evaluator nn
-     * @param model - Evaluator nn save model
-     * @param record - Evaluator nn training data in List data structure
+     * @param w                  - Board width
+     * @param h                  - Board height
+     * @param env                - Game data folder path
+     * @param dataFileDir        - Game data file
+     * @param recordFile         - Training data for evaluator nn
+     * @param model              - Evaluator nn save model
+     * @param record             - Evaluator nn training data in List data structure
      * @param networkCoordinator - Coordinator between the game and the column chooser NN
      */
     public Board(int w, int h, String env, File dataFileDir, File recordFile, File model, List<BoardWinPair> record, BoardNetworkCoordinator networkCoordinator) {
@@ -224,6 +225,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         container.add(calculate);
         container.add(eval);
         container.add(whenAddingRecord);
+        container.add(player);
         container.add(writeToFile);
 
         layout.putConstraint(SpringLayout.WEST, calculate, 20, SpringLayout.WEST, container);
@@ -240,6 +242,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         layout.putConstraint(SpringLayout.NORTH, loadNet, 15, SpringLayout.SOUTH, whenAddingRecord);
         layout.putConstraint(SpringLayout.WEST, discardList, 15, SpringLayout.EAST, loadNet);
         layout.putConstraint(SpringLayout.NORTH, discardList, 0, SpringLayout.NORTH, loadNet);
+        layout.putConstraint(SpringLayout.WEST, player, 0, SpringLayout.WEST, loadNet);
+        layout.putConstraint(SpringLayout.NORTH, player, 15, SpringLayout.SOUTH, loadNet);
 
         frame.setPreferredSize(new Dimension(350, 200));
         double x = getContentPane().getLocationOnScreen().getX() + (w * 50 + 100);
@@ -258,27 +262,59 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
         this.networkCoordinator = networkCoordinator;
 
-
+        player.setText("Currently: "+playerTurn);
     }
 
-    public State getS() {
-        return s;
-    }
 
+    /**
+     * Calculates with brute force the closeness to victory (by evaluating possibility tree)
+     *
+     * @return Returns the evaluator output as a double.
+     */
     public double doThing() {
         CellState tes = s.checkWin();
         System.out.println(tes);
-        TreeNode<State> future = WinAssessment.assessWin(s, 1);
+        TreeNode<State> future = WinAssessment.assessWin(s, playerTurn);
         return WinAssessment.diff;
     }
 
     /**
      * This calls the coordinator
      *
-     * @param column - The column in which the move was made
+     * @param game - The state of the game after the human
      */
-    private void moveMade(int column) {
-        int result = networkCoordinator.getNNAction(this.s);
+    private void moveMade(State game) {
+        System.out.println("entered move maker method in board");
+        trainChooser(game);
+        System.out.println("trained chooser from board");
+        int result = networkCoordinator.getNNAction(game);
+        if (result < 7 && result > -1) {
+
+            s.makeMove(playerTurn, result);
+
+            panel.setState(s);
+            repaint();
+            playerTurn = -playerTurn;
+        } else {
+            System.err.println("Problem!!");
+        }
+    }
+
+    private void trainChooser(State game) {
+        System.out.println("entered training chooser method in board");
+
+        int column = NetworkTest.bestColumnFromHere(game);
+        BoardColumnPair pair = new BoardColumnPair(game.convertToArray(), column);
+
+        if (networkCoordinator.isChooserNull()) {
+            System.err.println("chooser was null!");
+            //networkCoordinator.addPair(pair);
+            networkCoordinator.createChooser(h, w);
+        }
+        this.networkCoordinator.trainChooser(pair);
+
+
+
 
     }
 
@@ -290,6 +326,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         frame.setLocation((int) (x + 10), (int) y);
         frame.pack();
         frame.repaint();
+
     }
 
     public void mouseClicked(MouseEvent e) {
@@ -306,7 +343,6 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         int unitW = getWidth() / w;
         int col = (int) (location.getX() / unitW + 30 * 1.5);
         int row = (int) (location.getY() / h + 30 * 1.5);
-        move m = new move(row, col, playerTurn);
 
 
         for (int i = 0; i < w; i++) {
@@ -314,10 +350,18 @@ public class Board extends JFrame implements MouseListener, WindowListener {
             if (location.getX() > (x) && location.getX() < (x + 30)) {
                 s.makeMove(playerTurn, i);
                 playerTurn = -playerTurn;
-                played.add(m);
+
                 panel.setState(s);
+
                 repaint();
-                moveMade(i);
+                if (playerTurn == -1) {
+                    System.out.println("Computer making move");
+                    moveMade(s);
+
+
+                    //trainChooser(s); //For training the chooser
+                }
+
                 break;
             }
         }
@@ -361,15 +405,6 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     }
 
-    class move {
-        int row, col, player;
-
-        public move(int row, int col, int player) {
-            this.row = row;
-            this.col = col;
-            this.player = player;
-        }
-    }
 
     class myPanel extends JPanel {
         protected int size = 30;

@@ -26,7 +26,7 @@ public class WinAssessment {
 
         TreeNode<State> futureStates = new TreeNode<State>(null, game, game.getW());
         formLayer(futureStates, player, futureStates, 1);
-        diff = (countBlue - countRed)/Math.max(countBlue, countRed);
+        diff = (countBlue - countRed)/Math.max(countBlue, countRed)*player;
         System.out.println((Math.abs(countBlue - countRed) / Math.max(countBlue, countRed)) + " after " + count);
 
         return futureStates;

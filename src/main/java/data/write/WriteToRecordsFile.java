@@ -1,5 +1,6 @@
 package data.write;
 
+import GameObjects.BoardColumnPair;
 import GameObjects.BoardWinPair;
 
 import java.io.BufferedWriter;
@@ -24,6 +25,31 @@ public class WriteToRecordsFile {
             for (BoardWinPair pair : records) {
                 double[] input = pair.getBoard();
                 double out = pair.getOutcome();
+                String line = Arrays.toString(input);
+                line = line.replaceAll("\\[", "");
+                line = line.replaceAll("\\]", "");
+                line = line.replaceAll("\\s", "");
+                line += ":" + out;
+                bw.append(line);
+                bw.newLine();
+            }
+            bw.flush();
+            bw.close();
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public static void writeColumnRecords(List<BoardColumnPair> records, File recordFile) {
+
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(recordFile));
+
+
+            for (BoardColumnPair pair : records) {
+                double[] input = pair.getBoard();
+                double out = pair.getColumn();
                 String line = Arrays.toString(input);
                 line = line.replaceAll("\\[", "");
                 line = line.replaceAll("\\]", "");

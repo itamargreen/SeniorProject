@@ -2,6 +2,7 @@ import GameObjects.BoardWinPair;
 import ManualGame.Board;
 import MoveMaker.BoardNetworkCoordinator;
 import data.restore.RestoreRecordFile;
+import neuralNets.NetworkTest;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,8 +17,10 @@ public class ConnectingFourNNs {
 
     public static File dataFileDir;
     public static File recordFile;
+    public static File recordColumnFile;
     private static String env;
     private static File model;
+    private static File chooser;
     private static List<BoardWinPair> record = new ArrayList<BoardWinPair>();
     private static BoardNetworkCoordinator networkCoordinator;
 
@@ -41,11 +44,21 @@ public class ConnectingFourNNs {
                 e.printStackTrace();
             }
         }
+        recordColumnFile = new File(env + "\\recordColumns.txt");
+        if (!recordColumnFile.exists()) {
+            try {
+                recordColumnFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         model = new File(env + "\\model.zip");
+        chooser = new File(env + "\\chooser.zip");
         //NetworkTest.loadNet(model);
-
+        NetworkTest.loadNN(model);
         record = RestoreRecordFile.readRecords(recordFile);
-        networkCoordinator = new BoardNetworkCoordinator();
+        networkCoordinator = new BoardNetworkCoordinator(chooser, recordColumnFile);
+        networkCoordinator.createChooser(6, 7);
         Board b = new Board(7, 6, env, dataFileDir, recordFile, model, record, networkCoordinator);
 
 
