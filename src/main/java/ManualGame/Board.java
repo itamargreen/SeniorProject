@@ -2,6 +2,7 @@ package ManualGame;
 
 import GameObjects.CellState;
 import GameObjects.State;
+import MoveMaker.BoardNetworkCoordinator;
 import com.diffplug.common.base.TreeNode;
 import GameObjects.BoardWinPair;
 import data.restore.RestoreRecordFile;
@@ -24,12 +25,12 @@ import java.util.Stack;
  */
 public class Board extends JFrame implements MouseListener, WindowListener {
     public static Stack<Integer>[] boardStacks;
-    //<temporary>
-    public static File dataFileDir;
-    public static File recordFile;
-    public static File model;
+    private BoardNetworkCoordinator networkCoordinator;
+    private File dataFileDir;
+    private File recordFile;
+    private File model;
     protected static int playerTurn = 1;
-    private static List<BoardWinPair> record = new ArrayList<BoardWinPair>();
+    private List<BoardWinPair> record = new ArrayList<BoardWinPair>();
     private static String env;
     private myPanel panel;
     private int w, h;
@@ -37,38 +38,84 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     private List<move> played = new ArrayList<move>();
     private JFrame frame = new JFrame();
     private JLabel whenAddingRecord = new JLabel("waiting...");
-    //</temporary>
 
 
-    public Board(int w, int h) {
-        //<temporary>
-        env = System.getenv("AppData") + "\\SeniorProjectDir\\";
-        dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
-        if (!dataFileDir.exists()) {
-            dataFileDir.mkdir();
-        } else if (!dataFileDir.isDirectory()) {
-            dataFileDir.delete();
-            dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
-            dataFileDir.mkdir();
-        }
-        recordFile = new File(env + "\\records.txt");
-        if (!recordFile.exists()) {
-            try {
-                recordFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        model = new File(env + "\\model.zip");
-        //NetworkTest.loadNet(model);
+    public File getDataFileDir() {
+        return dataFileDir;
+    }
 
-        List<BoardWinPair> readingList = RestoreRecordFile.readRecords(recordFile);
-        Board.record = readingList;
+    public void setDataFileDir(File dataFileDir) {
+        this.dataFileDir = dataFileDir;
+    }
 
-        //</temporary>
+    public File getRecordFile() {
+        return recordFile;
+    }
 
+    public void setRecordFile(File recordFile) {
+        this.recordFile = recordFile;
+    }
+
+    public File getModel() {
+        return model;
+    }
+
+    public void setModel(File model) {
+        this.model = model;
+    }
+
+    public List<BoardWinPair> getRecord() {
+        return record;
+    }
+
+    public void setRecord(List<BoardWinPair> record) {
+        this.record = record;
+    }
+
+    public static String getEnv() {
+        return env;
+    }
+
+    public static void setEnv(String env) {
+        Board.env = env;
+    }
+
+    public int getW() {
+        return w;
+    }
+
+    public void setW(int w) {
+        this.w = w;
+    }
+
+    public int getH() {
+        return h;
+    }
+
+    public void setH(int h) {
+        this.h = h;
+    }
+
+    /**
+     *
+     * @param w - Board width
+     * @param h - Board height
+     * @param env - Game data folder path
+     * @param dataFileDir - Game data file
+     * @param recordFile - Training data for evaluator nn
+     * @param model - Evaluator nn save model
+     * @param record - Evaluator nn training data in List data structure
+     * @param networkCoordinator - Coordinator between the game and the column chooser NN
+     */
+    public Board(int w, int h, String env, File dataFileDir, File recordFile, File model, List<BoardWinPair> record, BoardNetworkCoordinator networkCoordinator) {
+        this.model = model;
+
+        this.dataFileDir = dataFileDir;
+        this.recordFile = recordFile;
+        this.record = record;
         this.w = w;
         this.h = h;
+
         s = new State(w, h);
         boardStacks = new Stack[w];
         for (int i = 0; i < w; i++) {
@@ -106,9 +153,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         gameThread.start();
 
 
-        //setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(this);
-
         Container container = frame.getContentPane();
         SpringLayout layout = new SpringLayout();
         container.setLayout(layout);
@@ -119,7 +164,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         useRecords.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                NetworkTest.firstNeuralTest(record, w * h, model);
+                NetworkTest.firstNeuralTest(getRecord(), w * h, model);
             }
         });
         container.add(useRecords);
@@ -138,7 +183,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         discardList.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                record = new ArrayList<>();
+                setRecord(new ArrayList<BoardWinPair>());
+
                 whenAddingRecord.setText("now has " + record.size() + " records");
             }
         });
@@ -150,10 +196,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
             public void actionPerformed(ActionEvent e) {
                 if (s.checkWin().equals(CellState.EMPTY)) {
                     double[] input = s.convertToArray();
-                    long tick = System.currentTimeMillis();
-                    int out = doThing();
-                    long tock = System.currentTimeMillis();
-                    long distance = tock - tick;
+                    double out = doThing();
                     BoardWinPair pair = new BoardWinPair(input, out);
                     if (eval.isSelected()) {
                         NetworkTest.testNetwork(pair);
@@ -213,17 +256,30 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
+        this.networkCoordinator = networkCoordinator;
+
+
     }
 
     public State getS() {
         return s;
     }
 
-    public int doThing() {
+    public double doThing() {
         CellState tes = s.checkWin();
         System.out.println(tes);
         TreeNode<State> future = WinAssessment.assessWin(s, 1);
-        return (int) WinAssessment.diff;
+        return WinAssessment.diff;
+    }
+
+    /**
+     * This calls the coordinator
+     *
+     * @param column - The column in which the move was made
+     */
+    private void moveMade(int column) {
+        int result = networkCoordinator.getNNAction(this.s);
+
     }
 
     @Override
@@ -261,6 +317,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
                 played.add(m);
                 panel.setState(s);
                 repaint();
+                moveMade(i);
                 break;
             }
         }

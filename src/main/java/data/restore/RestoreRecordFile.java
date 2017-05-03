@@ -11,6 +11,7 @@ import java.util.List;
  */
 public class RestoreRecordFile {
 
+
     public static List<BoardWinPair> readRecords(File recordFile) {
         List<BoardWinPair> records = new ArrayList<>();
         try {
@@ -26,7 +27,7 @@ public class RestoreRecordFile {
                     String boardData = data[0];
                     String output = data[1];
                     String[] boardString = boardData.split(",");
-                    int out = Integer.parseInt(output);
+                    double out = Double.parseDouble(output);
                     double[] input = new double[boardString.length];
                     for(int i = 0;i<boardString.length;i++){
                         double temp = Double.parseDouble(boardString[i]);

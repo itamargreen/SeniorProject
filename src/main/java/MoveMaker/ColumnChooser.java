@@ -78,40 +78,43 @@ public class ColumnChooser {
         int nHidden = totalSize * 2;
         int numOutputs = 1;
         configuration = new NeuralNetConfiguration.Builder()
-                    .seed(seed)
-                    .iterations(iterations)
-                    .optimizationAlgo(OptimizationAlgorithm.LBFGS)
-                    .learningRate(learningRate)
-                    .weightInit(WeightInit.XAVIER)
+                .seed(seed)
+                .iterations(iterations)
+                .optimizationAlgo(OptimizationAlgorithm.LBFGS)
+                .learningRate(learningRate)
+                .weightInit(WeightInit.XAVIER)
 
-                    .list()
-                    .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-                            .activation(Activation.SOFTMAX)
-                            .build())
-                    .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3)
-                            .activation(Activation.RELU)
-                            .build())
-                    .layer(2, new DenseLayer.Builder().nIn(nHidden / 3).nOut((nHidden / 3) * 2)
-                            .activation(Activation.RELU)
-                            .build())
+                .list()
+                .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
+                        .activation(Activation.SOFTMAX)
+                        .build())
+                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3)
+                        .activation(Activation.SOFTMAX)
+                        .build())
+                .layer(2, new DenseLayer.Builder().nIn(nHidden / 3).nOut((nHidden / 3) * 2)
+                        .activation(Activation.SOFTMAX)
+                        .build())
 
-                    .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                            .activation(Activation.IDENTITY)
-                            .nIn((nHidden / 3) * 2).nOut(numOutputs).build())
-                    .pretrain(false).backprop(true).build();
+                .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                        .activation(Activation.IDENTITY)
+                        .nIn((nHidden / 3) * 2).nOut(numOutputs).build())
+                .pretrain(false).backprop(true).build();
+        double[] labelArray = new double[width];
+        for (int i = 0; i < labelArray.length; i++) {
+            labelArray[i] = (double) i;
 
-
-
-
-
-
-
-
-
+        }
+        this.labels = Nd4j.create(labelArray);
     }
 
+    private INDArray labels;
+
+    /**
+     * This method trains the Chooser on the records list it has as a member. Should add more to the list for more training.
+     * //TODO: This should actually use the early stopping, not fully implemented yet!
+     */
     private void trainNN() {
-        if(net == null){
+        if (net == null) {
             double[][] inputArray = new double[boardWinPairs.size()][height * width];
             double[][] outputArray = new double[boardWinPairs.size()][1];
             for (int i = 0; i < inputArray.length; i++) {
@@ -124,8 +127,8 @@ public class ColumnChooser {
 
             DataSet dataSet = new DataSet(input, output);
             List<DataSet> list = dataSet.asList();
-            List<DataSet> trainData = list.subList(0, (list.size() / 3)*2);
-            List<DataSet> testData = list.subList((list.size() / 3)*2, list.size());
+            List<DataSet> trainData = list.subList(0, (list.size() / 3) * 2);
+            List<DataSet> testData = list.subList((list.size() / 3) * 2, list.size());
             DataSetIterator myTrainData = new ListDataSetIterator(trainData, trainData.size());
             DataSetIterator myTestData = new ListDataSetIterator(testData, testData.size());
 
@@ -143,15 +146,8 @@ public class ColumnChooser {
             net = (MultiLayerNetwork) result.getBestModel();
 
             net.setListeners(new ScoreIterationListener(1));
-            double[] labelArray = new double[width];
-            for (int i = 0; i < labelArray.length; i++) {
-                labelArray[i] = (double) i;
-
-            }
-            INDArray labels = Nd4j.create(labelArray);
             net.setLabels(labels);
         }
-
 
 
     }
@@ -172,6 +168,10 @@ public class ColumnChooser {
 
     public void doTraining(BoardWinPair pair) {
         boardWinPairs.add(pair);
-
+        trainNN();
+    }
+    public void doTraining(List<BoardWinPair> records) {
+        this.boardWinPairs = records;
+        trainNN();
     }
 }
