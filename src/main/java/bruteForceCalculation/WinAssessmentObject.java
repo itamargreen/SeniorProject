@@ -1,12 +1,15 @@
+package bruteForceCalculation;
 
-
+import GameObjects.CellState;
+import GameObjects.State;
+import ManualGame.Board;
 import com.diffplug.common.base.TreeNode;
 
 /**
  * Created by itamar on 23-Mar-17.
  */
 public class WinAssessmentObject implements AssessmentRunnable{
-    static Board.myPanel panel;
+
     public boolean[] fill;
     public int diff = 0;
     private int count = 0;
@@ -17,13 +20,13 @@ public class WinAssessmentObject implements AssessmentRunnable{
 
 
 
-    public TreeNode<State> assessWin(State game, int player, Board.myPanel panel) {
+    public TreeNode<State> assessWin(State game, int player) {
         //fill = new boolean[game.getH()][game.getW()];
         count = 0;
         countBlue = 0;
         countRed = 0;
         State clone = new State(game);
-        WinAssessmentObject.panel = panel;
+
         TreeNode<State> futureStates = new TreeNode<State>(null, game, game.getW());
         formLayer(futureStates, player, futureStates);
         diff = (countBlue - countRed) * player;
@@ -90,7 +93,5 @@ public class WinAssessmentObject implements AssessmentRunnable{
 
     }
 
-    public void setPanel(Board.myPanel panel) {
 
-    }
 }

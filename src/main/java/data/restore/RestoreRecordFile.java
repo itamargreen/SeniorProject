@@ -1,10 +1,9 @@
 package data.restore;
 
-import data.BoardWinPair;
+import GameObjects.BoardWinPair;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
