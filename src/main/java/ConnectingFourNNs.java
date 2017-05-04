@@ -2,15 +2,16 @@ import GameObjects.BoardWinPair;
 import ManualGame.Board;
 import MoveMaker.BoardNetworkCoordinator;
 import data.restore.RestoreRecordFile;
-import neuralNets.NetworkTest;
+import evaluator.EvaluatorNN;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
+ * This is the main of the program. Here I create the files needed, and "install" the program (create a folder and put needed files in it).
+ * <p>
  * Created by User on 29-Apr-17.
  */
 public class ConnectingFourNNs {
@@ -24,6 +25,12 @@ public class ConnectingFourNNs {
     private static List<BoardWinPair> record = new ArrayList<BoardWinPair>();
     private static BoardNetworkCoordinator networkCoordinator;
 
+    /**
+     * This creates the folders and files needed to run the program.
+     * //TODO: Add zip saving of training and then make this a self extracting jar or something
+     *
+     * @param args - Passed from cmd. Not needed.
+     */
     public static void main(String[] args) {
 
         env = System.getenv("AppData") + "\\SeniorProjectDir\\";
@@ -54,8 +61,7 @@ public class ConnectingFourNNs {
         }
         model = new File(env + "\\model.zip");
         chooser = new File(env + "\\chooser.zip");
-        //NetworkTest.loadNet(model);
-        NetworkTest.loadNN(model);
+        EvaluatorNN.loadNN(model);
         record = RestoreRecordFile.readRecords(recordFile);
         networkCoordinator = new BoardNetworkCoordinator(chooser, recordColumnFile);
         networkCoordinator.createChooser(6, 7);

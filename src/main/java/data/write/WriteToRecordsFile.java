@@ -11,11 +11,20 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by User on 29-Apr-17.
+ * This class has static methods for writing lists of {@link BoardColumnPair} and {@link BoardWinPair} to their respective files.
+ * <p>
+ * Has a "brother" ({@link data.restore.RestoreRecordFile}) that reads from those same files and converts them back to lists.
+ * Created by Itamar.
  */
 public class WriteToRecordsFile {
 
-
+    /**
+     * This method write a list of {@link BoardWinPair} to the specified file. Uses a bit of regex here and there and a BufferedWriter
+     *
+     * @param records    The list of records of {@link BoardWinPair} to write to file.
+     * @param recordFile A file to save to. Currently .txt file, might change to protect from external changing.
+     * @see BufferedWriter
+     */
     public static void writeRecords(List<BoardWinPair> records, File recordFile) {
 
         try {
@@ -41,6 +50,14 @@ public class WriteToRecordsFile {
             e.printStackTrace();
         }
     }
+
+    /**
+     * This method write a list of {@link BoardColumnPair} to the specified file. Uses a bit of regex here and there and a BufferedWriter
+     *
+     * @param records    The list of records of {@link BoardColumnPair} to write to file.
+     * @param recordFile A file to save to. Currently .txt file, might change to protect from external changing.
+     * @see BufferedWriter
+     */
     public static void writeColumnRecords(List<BoardColumnPair> records, File recordFile) {
 
         try {

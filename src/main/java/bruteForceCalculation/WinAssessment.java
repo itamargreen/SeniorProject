@@ -2,10 +2,14 @@ package bruteForceCalculation;
 
 import GameObjects.CellState;
 import GameObjects.State;
-import ManualGame.Board;
 import com.diffplug.common.base.TreeNode;
 
 /**
+ * This class would be static, if Java was like C#. But this is Java so it has static methods and members. It creates a single training set for the Evaluator Neural network, using brute force
+ *
+ * @see WinAssessment#formLayer(TreeNode, int, TreeNode, int)
+ * <p>
+ * <p>
  * Created by itamar on 23-Mar-17.
  */
 public class WinAssessment {
@@ -17,40 +21,54 @@ public class WinAssessment {
     private static double countRed = 0;
     private static int lastLine = -1;
 
+    /**
+     * Calls recursive method that calculates by brute force the "probability" for red player to win
+     *
+     * @param game   The current game state from which to assess the win.
+     * @param player Not used. Previously used for assessing the victory of specified player (1 or -1).
+     * @return A parent tree that is the current game, and whose children are all the possible game states.
+     * @see WinAssessment#formLayer(TreeNode, int, TreeNode, int)
+     */
     public static TreeNode<State> assessWin(State game, int player) {
-        //fill = new boolean[game.getH()][game.getW()];
+
         count = 0;
         countBlue = 0;
         countRed = 0;
 
 
-        TreeNode<State> futureStates = new TreeNode<State>(null, game, game.getW());
-        formLayer(futureStates, player, futureStates, 1);
-        diff = (countBlue - countRed)/Math.max(countBlue, countRed)*player;
-        System.out.println((Math.abs(countBlue - countRed) / Math.max(countBlue, countRed)) + " after " + count);
+        TreeNode<State> futureStates = new TreeNode<State>(null, game, game.getWidth());
+        formLayer(futureStates, -1, futureStates, 1);
+        diff = (countRed - countBlue) / Math.max(countBlue, countRed);
+        System.out.println(diff + " after " + count);
 
         return futureStates;
 
     }
 
+    /**
+     * This calculates with brute force how close a player is to winning. It increases the {@link WinAssessment#countBlue countBlue}, {@link WinAssessment#countRed countRed} and {@link WinAssessment#count count} variables like this:
+     * <p>
+     * <center>red or blue count increase = 1/depth</center>
+     * This means that a player that has 2 wins in 2 turns will get a higher score than a player with 5 wins in 10 moves, which makes sense.
+     *
+     * @param node       The tree node from which to calculate the possible game states.
+     * @param player     the player that is making the move in the current step (1 or -1).
+     * @param parentNode futureStates variable in {@link WinAssessment#assessWin(State, int)} method.
+     * @param depth      Tracks number of moves that the recursion has stepped into.
+     */
     private static void formLayer(TreeNode<State> node, int player, TreeNode<State> parentNode, int depth) {
         State current = node.getContent();
-        //current.print();
 
-
-//        double r1 = countBlue;
-//        double r2 = countRed;
-        //double temp = Math.abs(r1 - r2) / Math.max(countBlue, countRed);
         if (/*(Math.abs(r1-r2)/Math.max(countBlue,countRed)> 0.35 && count>1000000 )|| */count > 700000) {
 
             return;
         }
 
         if (!node.getContent().checkWin().equals(CellState.EMPTY)) {
-            System.out.println("found victory for "+(node.getContent().checkWin())+" after "+depth +" turns");
+            System.out.println("found victory for " + (node.getContent().checkWin()) + " after " + depth + " turns");
             return;
         } else {
-            for (int i = 0; i < current.getW(); i++) {
+            for (int i = 0; i < current.getWidth(); i++) {
                 State next = new State(current);
 
                 if (!next.makeMove(player, i)) {
@@ -67,7 +85,7 @@ public class WinAssessment {
                     }
 
                 }
-                TreeNode<State> nextNode = new TreeNode<State>(node, next, next.getW());
+                TreeNode<State> nextNode = new TreeNode<State>(node, next, next.getWidth());
 
 
                 if (next.checkWin().equals(CellState.EMPTY)) {

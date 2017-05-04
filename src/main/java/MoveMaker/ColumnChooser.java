@@ -1,7 +1,6 @@
 package MoveMaker;
 
 import GameObjects.BoardColumnPair;
-import GameObjects.BoardWinPair;
 import GameObjects.State;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.earlystopping.EarlyStoppingConfiguration;
@@ -29,11 +28,14 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * This class contains the Neural Network which is the core of this program. This makes the choices for the computer's moves in the game. I have no idea how it actually manages to give the correct choice, but that's true for all neural networks.
+ * <p>
+ * I just know how it's built and the theory of how it works
+ * <p/>
  * Created by User on 01-May-17.
  */
 public class ColumnChooser {
@@ -48,7 +50,15 @@ public class ColumnChooser {
     private int height;
     private int width;
 
-
+    /**
+     * Constructor for the chooser.
+     *
+     * @param boardColumnPairs Training data
+     * @param height           Height of the board.
+     * @param width            Width of the board.
+     * @param saved            Save file (.bin) of the model.
+     *                         //TODO: do something about the saved parameter
+     */
     public ColumnChooser(List<BoardColumnPair> boardColumnPairs, int height, int width, File saved) {
         this.saveFile2 = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
         this.width = width;
@@ -71,7 +81,9 @@ public class ColumnChooser {
         net = restored;
     }
 
-
+    /**
+     * Create configuration for neural network and create the labels, which increases the usefulness.
+     */
     private void createColumnChooser() {
         int totalSize = height * width;
         int numInput = totalSize;
@@ -88,28 +100,28 @@ public class ColumnChooser {
 //            }
 //        } else {
 
-            configuration = new NeuralNetConfiguration.Builder()
-                    .seed(seed)
-                    .iterations(iterations)
-                    .optimizationAlgo(OptimizationAlgorithm.LBFGS)
-                    .learningRate(learningRate)
-                    .weightInit(WeightInit.XAVIER)
+        configuration = new NeuralNetConfiguration.Builder()
+                .seed(seed)
+                .iterations(iterations)
+                .optimizationAlgo(OptimizationAlgorithm.LBFGS)
+                .learningRate(learningRate)
+                .weightInit(WeightInit.XAVIER)
 
-                    .list()
-                    .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-                            .activation(Activation.SOFTMAX)
-                            .build())
-                    .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3)
-                            .activation(Activation.SOFTMAX)
-                            .build())
-                    .layer(2, new DenseLayer.Builder().nIn(nHidden / 3).nOut((nHidden / 3) * 2)
-                            .activation(Activation.SOFTMAX)
-                            .build())
+                .list()
+                .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
+                        .activation(Activation.SOFTMAX)
+                        .build())
+                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3)
+                        .activation(Activation.SOFTMAX)
+                        .build())
+                .layer(2, new DenseLayer.Builder().nIn(nHidden / 3).nOut((nHidden / 3) * 2)
+                        .activation(Activation.SOFTMAX)
+                        .build())
 
-                    .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                            .activation(Activation.IDENTITY)
-                            .nIn((nHidden / 3) * 2).nOut(numOutputs).build())
-                    .pretrain(false).backprop(true).build();
+                .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                        .activation(Activation.IDENTITY)
+                        .nIn((nHidden / 3) * 2).nOut(numOutputs).build())
+                .pretrain(false).backprop(true).build();
 //        }
         double[] labelArray = new double[width];
         for (int i = 0; i < labelArray.length; i++) {
@@ -124,7 +136,7 @@ public class ColumnChooser {
 
 
     /**
-     * This method trains the Chooser on the records list it has as a member. Should add more to the list for more training.
+     * This method trains the Chooser on the records list it has as a member.
      */
     private void trainNN() {
         System.out.println("entered trainNN in chooser");
@@ -176,9 +188,17 @@ public class ColumnChooser {
 
     }
 
+    /**
+     * This gets a response from the chooser neural network which is how the computer chooses to play its next move.
+     * <p>
+     * This is both the most and least exciting method.
+     *
+     * @param gameState The state of the board to which the nn responds
+     * @return The output from the network which is close to an integer between 0 and the {@link #width}.
+     */
     public double chooseColumn(State gameState) {
         System.out.println("entered chooser in chooser");
-        double[][] boardArray = new double[1][gameState.getH() * gameState.getW()];
+        double[][] boardArray = new double[1][gameState.getHeight() * gameState.getWidth()];
         boardArray[0] = gameState.convertToArray();
 
         INDArray input = Nd4j.create(boardArray);
@@ -196,8 +216,16 @@ public class ColumnChooser {
         trainNN();
     }
 
+    /**
+     * Trains the neural network on all the records that it already has <b>AND</b> on the {@link List list} passed as a parameter.
+     *
+     * Calls {@link ColumnChooser#trainNN()} method.
+     * @see ColumnChooser#trainNN()
+     * @param records a list of {@link BoardColumnPair board column} pairs on which the neural network is trained.
+     *
+     */
     public void doTraining(List<BoardColumnPair> records) {
-        this.boardColumnPairs = records;
+        this.boardColumnPairs.addAll(records);
         trainNN();
     }
 }

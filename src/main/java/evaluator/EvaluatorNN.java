@@ -1,8 +1,7 @@
-package neuralNets;
+package evaluator;
 
 import GameObjects.BoardWinPair;
 import GameObjects.State;
-import ManualGame.Board;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -28,7 +27,7 @@ import java.util.Random;
 /**
  * Created by itamar on 24-Apr-17.
  */
-public class NetworkTest {
+public class EvaluatorNN {
     public static final int seed = 12345;
     //Number of iterations per minibatch
     public static final int iterations = 30;

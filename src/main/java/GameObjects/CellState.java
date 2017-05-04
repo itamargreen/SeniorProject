@@ -1,8 +1,21 @@
 package GameObjects;
 
 /**
- * Created by User on 29-Apr-17.
+ * Enum that makes the management of the {@link State} object <b><u>SO MUCH EASIER</u></b>
+ * <p>
+ * Created by Itamar.
  */
 public enum CellState {
-    BLUE,EMPTY,RED;
+    /**
+     * Blue player cell
+     */
+    BLUE,
+    /**
+     * Empty cell
+     */
+    EMPTY,
+    /**
+     * Red player cell
+     */
+    RED;
 }

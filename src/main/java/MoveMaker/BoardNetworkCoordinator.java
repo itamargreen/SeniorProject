@@ -9,6 +9,7 @@ import org.deeplearning4j.util.ModelSerializer;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -24,8 +25,9 @@ public class BoardNetworkCoordinator {
         return pairs;
     }
 
-    public void addPair(BoardColumnPair pair) {
-        this.pairs.add(pair);
+    public void addPair(BoardColumnPair... pair) {
+        List<BoardColumnPair> pairList = Arrays.asList(pair);
+        this.pairs.addAll(pairList);
     }
 
     public void setPairs(List<BoardColumnPair> pairs) {
@@ -68,18 +70,19 @@ public class BoardNetworkCoordinator {
         return (chooser == null);
     }
 
+    private void trainChooser() {
+        System.out.println("entered general trainer in coordinator");
+        List<BoardColumnPair> pairList = RestoreRecordFile.readColumnRecords(recordsColumn);
+        this.chooser.doTraining(pairList);
+    }
+
     public void trainChooser(BoardColumnPair pair) {
         System.out.println("entered single pair trainer in coordinator");
         pairs = RestoreRecordFile.readColumnRecords(recordsColumn);
         pairs.add(pair);
         WriteToRecordsFile.writeColumnRecords(this.pairs, recordsColumn);
-        this.trainChooser(pairs);
 
-    }
 
-    public void trainChooser(List<BoardColumnPair> records) {
-        System.out.println("entered list pairs trainer in coordinator");
-        this.chooser.doTraining(records);
     }
 
     public BoardNetworkCoordinator(File chooserFile, File recordsColumn) {
