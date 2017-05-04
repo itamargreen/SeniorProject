@@ -35,8 +35,8 @@ import java.util.concurrent.TimeUnit;
  * This class contains the Neural Network which is the core of this program. This makes the choices for the computer's moves in the game. I have no idea how it actually manages to give the correct choice, but that's true for all neural networks.
  * <p>
  * I just know how it's built and the theory of how it works
- * <p/>
- * Created by User on 01-May-17.
+ * <p>
+ * Created by Itamar.
  */
 public class ColumnChooser {
     private final int seed = 12345;
@@ -218,11 +218,11 @@ public class ColumnChooser {
 
     /**
      * Trains the neural network on all the records that it already has <b>AND</b> on the {@link List list} passed as a parameter.
-     *
+     * <p>
      * Calls {@link ColumnChooser#trainNN()} method.
-     * @see ColumnChooser#trainNN()
-     * @param records a list of {@link BoardColumnPair board column} pairs on which the neural network is trained.
      *
+     * @param records a list of {@link BoardColumnPair board column} pairs on which the neural network is trained.
+     * @see ColumnChooser#trainNN()
      */
     public void doTraining(List<BoardColumnPair> records) {
         this.boardColumnPairs.addAll(records);

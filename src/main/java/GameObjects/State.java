@@ -77,7 +77,7 @@ public class State {
      * Uses this conversion:
      * <p>
      * <center>
-     * <table border="1" width="75%">
+     * <table border="1" width="75%" summary="conversion table">
      * <tr>
      * <td>
      * <b>Cell State</b>
@@ -96,7 +96,7 @@ public class State {
      * <td>-1.0</td>
      * <td>1.0</td>
      * </tr>
-     * <p>
+     *
      * </table></center>
      *
      * @return an array of doubles converted with the above table.
@@ -136,9 +136,9 @@ public class State {
     /**
      * This method is called externally, and handles telling the caller if the move happened or not.
      *
-     * @param player the id of the player that is making the move (1 for blue, -1 for red)
-     * @param column
-     * @return true if and only if a move in the specified column was successfully made
+     * @param player The id of the player that is making the move (1 for blue, -1 for red).
+     * @param column The column in which a move is attempted.
+     * @return true if and only if a move in the specified column was successfully made.
      */
     public boolean makeMove(int player, int column) {
 
