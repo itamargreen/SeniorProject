@@ -1,6 +1,6 @@
 import GameObjects.BoardWinPair;
-import ManualGame.Board;
-import MoveMaker.BoardNetworkCoordinator;
+import manualGame.Board;
+import moveMaker.BoardNetworkCoordinator;
 import data.restore.RestoreRecordFile;
 import evaluator.EvaluatorNN;
 

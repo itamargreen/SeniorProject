@@ -1,4 +1,4 @@
-package MoveMaker;
+package moveMaker;
 
 import GameObjects.BoardColumnPair;
 import GameObjects.State;
@@ -49,6 +49,7 @@ public class ColumnChooser {
     private File saveFile2;
     private int height;
     private int width;
+    private INDArray labels;
 
     /**
      * Constructor for the chooser.
@@ -131,9 +132,6 @@ public class ColumnChooser {
         this.labels = Nd4j.create(labelArray);
 
     }
-
-    private INDArray labels;
-
 
     /**
      * This method trains the Chooser on the records list it has as a member.

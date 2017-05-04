@@ -1,15 +1,14 @@
-package ManualGame;
+package manualGame;
 
 import GameObjects.BoardColumnPair;
+import GameObjects.BoardWinPair;
 import GameObjects.CellState;
 import GameObjects.State;
-import MoveMaker.BoardNetworkCoordinator;
+import bruteForceCalculation.WinAssessment;
 import com.diffplug.common.base.TreeNode;
-import GameObjects.BoardWinPair;
 import data.write.WriteToRecordsFile;
 import evaluator.EvaluatorNN;
-import bruteForceCalculation.*;
-
+import moveMaker.BoardNetworkCoordinator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,97 +19,41 @@ import java.util.List;
 import java.util.Stack;
 
 /**
- * This class is the main GUI creator and handles. The {@link myPanel myPanel} class is a JPanel that handles actually drawing the board. This class handles coordinating pieces of the program, except for the {@link MoveMaker.ColumnChooser chooser}, which has its own {@link BoardNetworkCoordinator coordinator}.
- *
+ * This class is the main GUI creator and handles. The {@link myPanel myPanel} class is a JPanel that handles actually drawing the board. This class handles coordinating pieces of the program, except for the {@link moveMaker.ColumnChooser chooser}, which has its own {@link BoardNetworkCoordinator coordinator}.
+ * <p>
  * I did it like this because this is how I do GUI when I have to make it from scratch (without any gui creator like WindowBuilder or netbeans ide).
  * Created by Itamar.
  */
 public class Board extends JFrame implements MouseListener, WindowListener {
     public static Stack<Integer>[] boardStacks;
+    protected static int playerTurn = 1;
+    private static String env;
+    final JCheckBox autoCreateDataSet = new JCheckBox("Create Dataset");
     private BoardNetworkCoordinator networkCoordinator;
     private File dataFileDir;
     private File recordFile;
     private File model;
-    protected static int playerTurn = 1;
     private List<BoardWinPair> record = new ArrayList<BoardWinPair>();
-    private static String env;
     private myPanel panel;
     private int boardWidth, boardHeight;
     private State gameState;
-
     private JFrame frame = new JFrame();
     private JLabel whenAddingRecord = new JLabel("waiting...");
     private JLabel player = new JLabel("currently: ");
 
 
-    public File getDataFileDir() {
-        return dataFileDir;
-    }
-
-    public void setDataFileDir(File dataFileDir) {
-        this.dataFileDir = dataFileDir;
-    }
-
-    public File getRecordFile() {
-        return recordFile;
-    }
-
-    public void setRecordFile(File recordFile) {
-        this.recordFile = recordFile;
-    }
-
-    public File getModel() {
-        return model;
-    }
-
-    public void setModel(File model) {
-        this.model = model;
-    }
-
-    public List<BoardWinPair> getRecord() {
-        return record;
-    }
-
-    public void setRecord(List<BoardWinPair> record) {
-        this.record = record;
-    }
-
-    public static String getEnv() {
-        return env;
-    }
-
-    public static void setEnv(String env) {
-        Board.env = env;
-    }
-
-    public int getBoardWidth() {
-        return boardWidth;
-    }
-
-    public void setBoardWidth(int boardWidth) {
-        this.boardWidth = boardWidth;
-    }
-
-    public int getBoardHeight() {
-        return boardHeight;
-    }
-
-    public void setBoardHeight(int boardHeight) {
-        this.boardHeight = boardHeight;
-    }
-
     /**
      * Game gui class constructor. Handles all the control buttons and gui liveliness.
-     *
+     * <p>
      * Not used as logic block, i.e. doesn't do anything other than gui.
      *
-     * @param boardWidth                  Board width
-     * @param boardHeight                  Board height
-     * @param env               Game data folder path
-     * @param dataFileDir       Game data file
-     * @param recordFile        Training data for evaluator nn
-     * @param model             Evaluator nn save model
-     * @param record            Evaluator nn training data in List data structure
+     * @param boardWidth         Board width
+     * @param boardHeight        Board height
+     * @param env                Game data folder path
+     * @param dataFileDir        Game data file
+     * @param recordFile         Training data for evaluator nn
+     * @param model              Evaluator nn save model
+     * @param record             Evaluator nn training data in List data structure
      * @param networkCoordinator Coordinator between the game and the column chooser NN
      */
     public Board(int boardWidth, int boardHeight, String env, File dataFileDir, File recordFile, File model, List<BoardWinPair> record, BoardNetworkCoordinator networkCoordinator) {
@@ -165,6 +108,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         container.setLayout(layout);
 
         final JCheckBox eval = new JCheckBox("Evaluate");
+
 
         JButton useRecords = new JButton("Use Records");
         useRecords.addActionListener(new ActionListener() {
@@ -238,6 +182,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
         container.add(calculate);
         container.add(eval);
+        container.add(autoCreateDataSet);
         container.add(whenAddingRecord);
         container.add(player);
         container.add(writeToFile);
@@ -260,6 +205,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         layout.putConstraint(SpringLayout.NORTH, player, 15, SpringLayout.SOUTH, loadNet);
         layout.putConstraint(SpringLayout.WEST, createTrainingSetForChooser, 0, SpringLayout.WEST, discardList);
         layout.putConstraint(SpringLayout.NORTH, createTrainingSetForChooser, 15, SpringLayout.SOUTH, discardList);
+        layout.putConstraint(SpringLayout.WEST, autoCreateDataSet, 0, SpringLayout.WEST, eval);
+        layout.putConstraint(SpringLayout.NORTH, autoCreateDataSet, 15, SpringLayout.SOUTH, eval);
 
         frame.setPreferredSize(new Dimension(350, 200));
         double x = getContentPane().getLocationOnScreen().getX() + (boardWidth * 50 + 100);
@@ -281,6 +228,61 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         player.setText("Currently: " + playerTurn);
     }
 
+    public static String getEnv() {
+        return env;
+    }
+
+    public static void setEnv(String env) {
+        Board.env = env;
+    }
+
+    public File getDataFileDir() {
+        return dataFileDir;
+    }
+
+    public void setDataFileDir(File dataFileDir) {
+        this.dataFileDir = dataFileDir;
+    }
+
+    public File getRecordFile() {
+        return recordFile;
+    }
+
+    public void setRecordFile(File recordFile) {
+        this.recordFile = recordFile;
+    }
+
+    public File getModel() {
+        return model;
+    }
+
+    public void setModel(File model) {
+        this.model = model;
+    }
+
+    public List<BoardWinPair> getRecord() {
+        return record;
+    }
+
+    public void setRecord(List<BoardWinPair> record) {
+        this.record = record;
+    }
+
+    public int getBoardWidth() {
+        return boardWidth;
+    }
+
+    public void setBoardWidth(int boardWidth) {
+        this.boardWidth = boardWidth;
+    }
+
+    public int getBoardHeight() {
+        return boardHeight;
+    }
+
+    public void setBoardHeight(int boardHeight) {
+        this.boardHeight = boardHeight;
+    }
 
     /**
      * Calculates with brute force the closeness to victory (by evaluating possibility tree)
@@ -301,8 +303,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      */
     private void moveMade(State game) {
         System.out.println("entered move maker method in board");
-        //trainChooser(game);
-        System.out.println("trained chooser from board");
+        networkCoordinator.trainChooser();
+        //System.out.println("trained chooser from board");
         int result = networkCoordinator.getNNAction(game);
         if (result < 7 && result > -1) {
 
@@ -342,15 +344,15 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     private void trainChooser(State game) {
         System.out.println("entered training chooser method in board");
 
-        int column = EvaluatorNN.bestColumnFromHere(game);
-        BoardColumnPair pair = new BoardColumnPair(game.convertToArray(), column);
+//        int column = EvaluatorNN.bestColumnFromHere(game);
+//        BoardColumnPair pair = new BoardColumnPair(game.convertToArray(), column);
 
         if (networkCoordinator.isChooserNull()) {
             System.err.println("chooser was null!");
             //networkCoordinator.addPair(pair);
             networkCoordinator.createChooser(boardHeight, boardWidth);
         }
-        this.networkCoordinator.trainChooser(pair);
+//        this.networkCoordinator.trainChooser(pair);
 
 
     }
@@ -402,13 +404,16 @@ public class Board extends JFrame implements MouseListener, WindowListener {
                 panel.setState(gameState);
 
                 repaint();
-//                if (playerTurn == -1) {
-//                    System.out.println("Computer making move");
-//                    moveMade(gameState);
+                if (autoCreateDataSet.isSelected()){
+                    createChooserTrainSet(gameState);
+                }
+                if (playerTurn == -1) {
+                    System.out.println("Computer making move");
+                    moveMade(gameState);
 //
 //
 //                    //trainChooser(gameState); //For training the chooser
-//                }
+                }
 
                 break;
             }

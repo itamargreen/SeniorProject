@@ -98,32 +98,6 @@ public class EvaluatorNN {
             outputData[i] = new double[]{records.get(i).getOutcome()};
         }
 
-//        double[][] inputData = new double[100][3];
-//        double[][] outputData = new double[100][1];
-//        Random rngg = new Random(12345);
-//
-//
-//
-//
-//        for (int i = 0; i < inputData.length / 2; i++) {
-//            double num1 = rngg.nextDouble() * 20.0 - 10.0;
-//            double num2 = rngg.nextDouble() * 20.0 - 10.0;
-//
-//            double third = num1 + num2;
-//            double[] arrTemp = {num1, num2, third};
-//            inputData[i] = arrTemp;
-//            outputData[i] = new double[]{1.00};
-//        }
-//        for (int i = inputData.length / 2; i < inputData.length; i++) {
-//            double num1 = rngg.nextDouble() * 20.0 - 10.0;
-//            double num2 = rngg.nextDouble() * 20.0 - 10.0;
-//            double num3 = rngg.nextDouble() * 40.0 - 20.0;
-//
-//            double[] arrTemp = {num1, num2, num3};
-//            inputData[i] = arrTemp;
-//            outputData[i] = new double[]{-1.00};
-//        }
-
 
         INDArray input = Nd4j.create(inputData);
         INDArray output = Nd4j.create(outputData);

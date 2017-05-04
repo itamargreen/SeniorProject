@@ -1,10 +1,10 @@
 package GameObjects;
 
 /**
- * This class is an object that pairs the board to a column. Used as training data for {@link MoveMaker.ColumnChooser chooser} neural network
+ * This class is an object that pairs the board to a column. Used as training data for {@link moveMaker.ColumnChooser chooser} neural network
  *
  * Created by Itamar
- * @see MoveMaker.ColumnChooser
+ * @see moveMaker.ColumnChooser
  */
 public class BoardColumnPair {
     private double[] board;
