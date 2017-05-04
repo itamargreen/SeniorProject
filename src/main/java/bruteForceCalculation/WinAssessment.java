@@ -8,7 +8,7 @@ import com.diffplug.common.base.TreeNode;
  * This class would be static, if Java was like C#. But this is Java so it has static methods and members. It creates a single training set for the Evaluator Neural network, using brute force
  *
  * @see WinAssessment#formLayer(TreeNode, int, TreeNode, int)
- * 
+ *
  * <p>
  * Created by itamar on 23-Mar-17.
  */
