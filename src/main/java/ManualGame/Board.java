@@ -1,12 +1,13 @@
 package ManualGame;
 
+import GameObjects.BoardColumnPair;
 import GameObjects.CellState;
 import GameObjects.State;
+import MoveMaker.BoardNetworkCoordinator;
 import com.diffplug.common.base.TreeNode;
 import GameObjects.BoardWinPair;
-import data.restore.RestoreRecordFile;
 import data.write.WriteToRecordsFile;
-import neuralNets.NetworkTest;
+import evaluator.EvaluatorNN;
 import bruteForceCalculation.*;
 
 
@@ -14,76 +15,128 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
 /**
- * Created by itamar on 21-Mar-17.
+ * This class is the main GUI creator and handles. The {@link myPanel myPanel} class is a JPanel that handles actually drawing the board. This class handles coordinating pieces of the program, except for the {@link MoveMaker.ColumnChooser chooser}, which has its own {@link BoardNetworkCoordinator coordinator}.
+ *
+ * I did it like this because this is how I do GUI when I have to make it from scratch (without any gui creator like WindowBuilder or netbeans ide).
+ * Created by Itamar.
  */
 public class Board extends JFrame implements MouseListener, WindowListener {
     public static Stack<Integer>[] boardStacks;
-    //<temporary>
-    public static File dataFileDir;
-    public static File recordFile;
-    public static File model;
+    private BoardNetworkCoordinator networkCoordinator;
+    private File dataFileDir;
+    private File recordFile;
+    private File model;
     protected static int playerTurn = 1;
-    private static List<BoardWinPair> record = new ArrayList<BoardWinPair>();
+    private List<BoardWinPair> record = new ArrayList<BoardWinPair>();
     private static String env;
     private myPanel panel;
-    private int w, h;
-    private State s;
-    private List<move> played = new ArrayList<move>();
+    private int boardWidth, boardHeight;
+    private State gameState;
+
     private JFrame frame = new JFrame();
     private JLabel whenAddingRecord = new JLabel("waiting...");
-    //</temporary>
+    private JLabel player = new JLabel("currently: ");
 
 
-    public Board(int w, int h) {
-        //<temporary>
-        env = System.getenv("AppData") + "\\SeniorProjectDir\\";
-        dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
-        if (!dataFileDir.exists()) {
-            dataFileDir.mkdir();
-        } else if (!dataFileDir.isDirectory()) {
-            dataFileDir.delete();
-            dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
-            dataFileDir.mkdir();
-        }
-        recordFile = new File(env + "\\records.txt");
-        if (!recordFile.exists()) {
-            try {
-                recordFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        model = new File(env + "\\model.zip");
-        //NetworkTest.loadNet(model);
+    public File getDataFileDir() {
+        return dataFileDir;
+    }
 
-        List<BoardWinPair> readingList = RestoreRecordFile.readRecords(recordFile);
-        Board.record = readingList;
+    public void setDataFileDir(File dataFileDir) {
+        this.dataFileDir = dataFileDir;
+    }
 
-        //</temporary>
+    public File getRecordFile() {
+        return recordFile;
+    }
 
-        this.w = w;
-        this.h = h;
-        s = new State(w, h);
-        boardStacks = new Stack[w];
-        for (int i = 0; i < w; i++) {
+    public void setRecordFile(File recordFile) {
+        this.recordFile = recordFile;
+    }
+
+    public File getModel() {
+        return model;
+    }
+
+    public void setModel(File model) {
+        this.model = model;
+    }
+
+    public List<BoardWinPair> getRecord() {
+        return record;
+    }
+
+    public void setRecord(List<BoardWinPair> record) {
+        this.record = record;
+    }
+
+    public static String getEnv() {
+        return env;
+    }
+
+    public static void setEnv(String env) {
+        Board.env = env;
+    }
+
+    public int getBoardWidth() {
+        return boardWidth;
+    }
+
+    public void setBoardWidth(int boardWidth) {
+        this.boardWidth = boardWidth;
+    }
+
+    public int getBoardHeight() {
+        return boardHeight;
+    }
+
+    public void setBoardHeight(int boardHeight) {
+        this.boardHeight = boardHeight;
+    }
+
+    /**
+     * Game gui class constructor. Handles all the control buttons and gui liveliness.
+     *
+     * Not used as logic block, i.e. doesn't do anything other than gui.
+     *
+     * @param boardWidth                  Board width
+     * @param boardHeight                  Board height
+     * @param env               Game data folder path
+     * @param dataFileDir       Game data file
+     * @param recordFile        Training data for evaluator nn
+     * @param model             Evaluator nn save model
+     * @param record            Evaluator nn training data in List data structure
+     * @param networkCoordinator Coordinator between the game and the column chooser NN
+     */
+    public Board(int boardWidth, int boardHeight, String env, File dataFileDir, File recordFile, File model, List<BoardWinPair> record, BoardNetworkCoordinator networkCoordinator) {
+        this.model = model;
+
+        this.dataFileDir = dataFileDir;
+        this.recordFile = recordFile;
+        this.record = record;
+        this.boardWidth = boardWidth;
+        this.boardHeight = boardHeight;
+
+        gameState = new State(boardWidth, boardHeight);
+        boardStacks = new Stack[boardWidth];
+        for (int i = 0; i < boardWidth; i++) {
             boardStacks[i] = new Stack<Integer>();
-            boardStacks[i].setSize(h);
+            boardStacks[i].setSize(boardHeight);
         }
-        setSize(w * 50 + 100, h * 50 + 100);
-        panel = new myPanel(w, h);
+        setSize(boardWidth * 50 + 100, boardHeight * 50 + 100);
+        panel = new myPanel(boardWidth, boardHeight);
 
 
         getContentPane().add(panel, BorderLayout.CENTER);
 
-        WinAssessment.fill = new boolean[h];
+        WinAssessment.fill = new boolean[boardHeight];
 
-        panel.setState(s);
+        panel.setState(gameState);
 
         setLocationRelativeTo(null);
         setVisible(true);
@@ -91,7 +144,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         Thread gameThread = new Thread(new Runnable() {
             public void run() {
                 while (true) {
-                    panel.setState(s);
+                    panel.setState(gameState);
 
                     repaint();
                     panel.repaint();
@@ -106,9 +159,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         gameThread.start();
 
 
-        //setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(this);
-
         Container container = frame.getContentPane();
         SpringLayout layout = new SpringLayout();
         container.setLayout(layout);
@@ -119,17 +170,26 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         useRecords.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                NetworkTest.firstNeuralTest(record, w * h, model);
+                EvaluatorNN.firstNeuralTest(getRecord(), boardWidth * boardHeight, model);
             }
         });
         container.add(useRecords);
+
+        JButton createTrainingSetForChooser = new JButton("Create chooser trainig set");
+        createTrainingSetForChooser.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                createChooserTrainSet(gameState);
+            }
+        });
+        container.add(createTrainingSetForChooser);
 
         JButton loadNet = new JButton("Load NN");
         loadNet.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (model.exists())
-                    NetworkTest.loadNN(model);
+                    EvaluatorNN.loadNN(model);
             }
         });
         container.add(loadNet);
@@ -138,7 +198,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         discardList.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                record = new ArrayList<>();
+                setRecord(new ArrayList<BoardWinPair>());
+
                 whenAddingRecord.setText("now has " + record.size() + " records");
             }
         });
@@ -148,15 +209,12 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         JButton calculate = new JButton("Foresee");
         calculate.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (s.checkWin().equals(CellState.EMPTY)) {
-                    double[] input = s.convertToArray();
-                    long tick = System.currentTimeMillis();
-                    int out = doThing();
-                    long tock = System.currentTimeMillis();
-                    long distance = tock - tick;
+                if (gameState.checkWin().equals(CellState.EMPTY)) {
+                    double[] input = gameState.convertToArray();
+                    double out = doThing();
                     BoardWinPair pair = new BoardWinPair(input, out);
                     if (eval.isSelected()) {
-                        NetworkTest.testNetwork(pair);
+                        EvaluatorNN.testNetwork(pair);
                     }
 
 
@@ -181,6 +239,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         container.add(calculate);
         container.add(eval);
         container.add(whenAddingRecord);
+        container.add(player);
         container.add(writeToFile);
 
         layout.putConstraint(SpringLayout.WEST, calculate, 20, SpringLayout.WEST, container);
@@ -197,9 +256,13 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         layout.putConstraint(SpringLayout.NORTH, loadNet, 15, SpringLayout.SOUTH, whenAddingRecord);
         layout.putConstraint(SpringLayout.WEST, discardList, 15, SpringLayout.EAST, loadNet);
         layout.putConstraint(SpringLayout.NORTH, discardList, 0, SpringLayout.NORTH, loadNet);
+        layout.putConstraint(SpringLayout.WEST, player, 0, SpringLayout.WEST, loadNet);
+        layout.putConstraint(SpringLayout.NORTH, player, 15, SpringLayout.SOUTH, loadNet);
+        layout.putConstraint(SpringLayout.WEST, createTrainingSetForChooser, 0, SpringLayout.WEST, discardList);
+        layout.putConstraint(SpringLayout.NORTH, createTrainingSetForChooser, 15, SpringLayout.SOUTH, discardList);
 
         frame.setPreferredSize(new Dimension(350, 200));
-        double x = getContentPane().getLocationOnScreen().getX() + (w * 50 + 100);
+        double x = getContentPane().getLocationOnScreen().getX() + (boardWidth * 50 + 100);
         double y = getContentPane().getLocationOnScreen().getY() + 10;
         frame.setLocation((int) (x + 10), (int) y);
         frame.pack();
@@ -213,27 +276,99 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
+        this.networkCoordinator = networkCoordinator;
+
+        player.setText("Currently: " + playerTurn);
     }
 
-    public State getS() {
-        return s;
-    }
 
-    public int doThing() {
-        CellState tes = s.checkWin();
+    /**
+     * Calculates with brute force the closeness to victory (by evaluating possibility tree)
+     *
+     * @return Returns the evaluator output as a double.
+     */
+    public double doThing() {
+        CellState tes = gameState.checkWin();
         System.out.println(tes);
-        TreeNode<State> future = WinAssessment.assessWin(s, 1);
-        return (int) WinAssessment.diff;
+        TreeNode<State> future = WinAssessment.assessWin(gameState, -1);
+        return WinAssessment.diff;
     }
 
+    /**
+     * This calls the coordinator for the chooser neural network, and applies the chooser's output as the computer made move.
+     *
+     * @param game The state of the game after the human
+     */
+    private void moveMade(State game) {
+        System.out.println("entered move maker method in board");
+        //trainChooser(game);
+        System.out.println("trained chooser from board");
+        int result = networkCoordinator.getNNAction(game);
+        if (result < 7 && result > -1) {
+
+            gameState.makeMove(playerTurn, result);
+
+            panel.setState(gameState);
+            repaint();
+            playerTurn = -playerTurn;
+        } else {
+            System.err.println("Problem!!");
+        }
+    }
+
+    /**
+     * Creates a training set of {@link BoardColumnPair} array that is passed to Coordinator for future use in training the network. This allows bigger training set while training, which makes the network's choices cleverer
+     *
+     * @param game The state of the game from which to create the training set.
+     */
+    private void createChooserTrainSet(State game) {
+        State copy = new State(game);
+        BoardColumnPair[] boardColumnPairs = new BoardColumnPair[boardWidth + 1];
+        boardColumnPairs[0] = new BoardColumnPair(copy.convertToArray(), EvaluatorNN.bestColumnFromHere(copy));
+        for (int i = 1; i < boardColumnPairs.length; i++) {
+            copy = new State(game);
+            copy.makeMove(-1, i - 1);
+            boardColumnPairs[i] = new BoardColumnPair(copy.convertToArray(), EvaluatorNN.bestColumnFromHere(copy));
+
+        }
+        networkCoordinator.addPair(boardColumnPairs);
+    }
+
+    /**
+     * Creates a single training {@link BoardColumnPair} that is passed to Coordinator and immediately trained with.
+     *
+     * @param game The state of the game from which to create the training set.
+     */
+    private void trainChooser(State game) {
+        System.out.println("entered training chooser method in board");
+
+        int column = EvaluatorNN.bestColumnFromHere(game);
+        BoardColumnPair pair = new BoardColumnPair(game.convertToArray(), column);
+
+        if (networkCoordinator.isChooserNull()) {
+            System.err.println("chooser was null!");
+            //networkCoordinator.addPair(pair);
+            networkCoordinator.createChooser(boardHeight, boardWidth);
+        }
+        this.networkCoordinator.trainChooser(pair);
+
+
+    }
+
+    /**
+     * Overridden method for painting the components in the JFrame. Needed to ensure the control JFrame's existence
+     *
+     * @param g Graphics object for the JFrame.
+     */
     @Override
     public void paintComponents(Graphics g) {
         super.paintComponents(g);
-        double x = getContentPane().getLocationOnScreen().getX() + (w * 50 + 100);
+        double x = getContentPane().getLocationOnScreen().getX() + (boardWidth * 50 + 100);
         double y = getContentPane().getLocationOnScreen().getY() + 10;
         frame.setLocation((int) (x + 10), (int) y);
         frame.pack();
         frame.repaint();
+
     }
 
     public void mouseClicked(MouseEvent e) {
@@ -245,22 +380,36 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     }
 
+
+    /**
+     * Used to respond to player actions such as making a move, and then allowing the computer to respond.
+     *
+     * @param e {@link MouseEvent} of mouse click in JFrame
+     */
     public void mouseReleased(MouseEvent e) {
         Point location = e.getPoint();
-        int unitW = getWidth() / w;
+        int unitW = getWidth() / boardWidth;
         int col = (int) (location.getX() / unitW + 30 * 1.5);
-        int row = (int) (location.getY() / h + 30 * 1.5);
-        move m = new move(row, col, playerTurn);
+        int row = (int) (location.getY() / boardHeight + 30 * 1.5);
 
 
-        for (int i = 0; i < w; i++) {
-            int x = ((getWidth() - 2 * 30) / w) * (i % w) + (int) (30 * 1.5 - 0.5);
+        for (int i = 0; i < boardWidth; i++) {
+            int x = ((getWidth() - 2 * 30) / boardWidth) * (i % boardWidth) + (int) (30 * 1.5 - 0.5);
             if (location.getX() > (x) && location.getX() < (x + 30)) {
-                s.makeMove(playerTurn, i);
+                gameState.makeMove(playerTurn, i);
                 playerTurn = -playerTurn;
-                played.add(m);
-                panel.setState(s);
+
+                panel.setState(gameState);
+
                 repaint();
+//                if (playerTurn == -1) {
+//                    System.out.println("Computer making move");
+//                    moveMade(gameState);
+//
+//
+//                    //trainChooser(gameState); //For training the chooser
+//                }
+
                 break;
             }
         }
@@ -304,15 +453,6 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     }
 
-    class move {
-        int row, col, player;
-
-        public move(int row, int col, int player) {
-            this.row = row;
-            this.col = col;
-            this.player = player;
-        }
-    }
 
     class myPanel extends JPanel {
         protected int size = 30;
@@ -329,6 +469,11 @@ public class Board extends JFrame implements MouseListener, WindowListener {
             this.state = state;
         }
 
+        /**
+         * Handles drawing the boards and the game.
+         *
+         * @param g Graphics object passed from JFrame whenever the JFrame's {@link Board#paintComponents}.
+         */
         @Override
         public void paint(Graphics g) {
             super.paint(g);
@@ -337,7 +482,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
                 g.drawOval(((getWidth() - 2 * size) / w) * (i % w) + (int) (size * 1.5 - 0.5), (getWidth() - size * 2) / w * (i / w) + (int) (size * 1.5 - 0.5), size + 1, size + 1);
 
             }
-            if (state.getW() != 0) {
+            if (state.getWidth() != 0) {
                 for (int i = 0; i < h; i++) {
                     for (int j = 0; j < w; j++) {
                         g.setColor(Color.black);

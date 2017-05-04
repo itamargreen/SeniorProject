@@ -5,30 +5,46 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by itamar on 23-Mar-17.
+ * This object is used everywhere. It is an object used for describing a board (not to be confused with {@link ManualGame.Board}, which does something else).
+ * <p>
+ * Has a handful of methods that make using the information it stores very simple
+ *
+ * @see ManualGame.Board
+ * Created by Itamar.
  */
 public class State {
 
     private CellState[][] cellStates;
-    private int w = 0, h = 0;
+    private int width = 0, height = 0;
 
-    public State(int w, int h) {
-        this.w = w;
-        this.h = h;
-        cellStates = new CellState[h][w];
-        for (int i = 0; i < h; i++) {
+    /**
+     * Constructor for the state of the board. Initializes the 2D array with {@link CellState#EMPTY} cells
+     *
+     * @param width  The width of the board (num of columns).
+     * @param height the height of the board (num of rows).
+     */
+    public State(int width, int height) {
+        this.width = width;
+        this.height = height;
+        cellStates = new CellState[this.height][this.width];
+        for (int i = 0; i < this.height; i++) {
             Arrays.fill(cellStates[i], CellState.EMPTY);
         }
 
 
     }
 
+    /**
+     * Copy constructor.
+     *
+     * @param copy The state to copy the data from.
+     */
     public State(State copy) {
-        cellStates = new CellState[copy.getH()][copy.getW()];
-        w = copy.getW();
-        h = copy.getH();
-        for (int i = 0; i < h; i++) {
-            for (int j = 0; j < w; j++) {
+        cellStates = new CellState[copy.getHeight()][copy.getWidth()];
+        width = copy.getWidth();
+        height = copy.getHeight();
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
                 switch (copy.getCellStates()[i][j]) {
                     case BLUE:
                         cellStates[i][j] = CellState.BLUE;
@@ -47,31 +63,60 @@ public class State {
 
     }
 
-    public int getW() {
-        return w;
+    public int getWidth() {
+        return width;
     }
 
-    public int getH() {
-        return h;
+    public int getHeight() {
+        return height;
     }
 
-
+    /**
+     * Converts the {@link State#cellStates} 2D array to a 1D double array, because that's the only thing a Neural network can use.
+     * <p>
+     * Uses this conversion:
+     * <p>
+     * <center>
+     * <table border="1" width="75%" summary="conversion table">
+     * <tr>
+     * <td>
+     * <b>Cell State</b>
+     * </td>
+     * <td>
+     * Empty
+     * </td>
+     * <td>
+     * Red
+     * </td>
+     * <td>Blue</td>
+     * </tr>
+     * <tr>
+     * <td><b>Value</b></td>
+     * <td>0.0</td>
+     * <td>-1.0</td>
+     * <td>1.0</td>
+     * </tr>
+     *
+     * </table></center>
+     *
+     * @return an array of doubles converted with the above table.
+     */
     public double[] convertToArray() {
         List<Double> temp = new ArrayList<Double>();
-        double[] res = new double[w * h];
-        for (int i = 0; i < h; i++) {
+        double[] res = new double[width * height];
+        for (int i = 0; i < height; i++) {
 
-            for (int j = 0; j < w; j++) {
+            for (int j = 0; j < width; j++) {
 
                 switch (cellStates[i][j]) {
                     case BLUE:
-                        res[i * w + j] = 1.0;
+                        res[i * width + j] = 1.0;
                         temp.add(1.0);
                     case RED:
-                        res[i * w + j] = -1.0;
+                        res[i * width + j] = -1.0;
                         temp.add(-1.0);
                     case EMPTY:
-                        res[i * w + j] = 0.0;
+                        res[i * width + j] = 0.0;
                         temp.add(0.0);
 
                 }
@@ -88,18 +133,24 @@ public class State {
         return res;
     }
 
-
-    public boolean makeMove(int player, int col) {
+    /**
+     * This method is called externally, and handles telling the caller if the move happened or not.
+     *
+     * @param player The id of the player that is making the move (1 for blue, -1 for red).
+     * @param column The column in which a move is attempted.
+     * @return true if and only if a move in the specified column was successfully made.
+     */
+    public boolean makeMove(int player, int column) {
 
         switch (player) {
             case 1:
-                if (applyMove(1, col)) {
+                if (applyMove(1, column)) {
                     return true;
                 } else {
                     return false;
                 }
             case -1:
-                if (applyMove(-1, col)) {
+                if (applyMove(-1, column)) {
                     return true;
                 } else {
                     return false;
@@ -109,17 +160,20 @@ public class State {
     }
 
     /**
-     * @param player
-     * @param col
-     * @return
+     * This actually checks if the player is allowed to make a move in the specified column.
+     * <br/> If he is, then the move is applied (a change is made in the cell array) and true is returned.
+     * <br/> Otherwise, false is returned.
+     *
+     * @param player The id of the player making the move.
+     * @param col    The column in which the move is made.
+     * @return true if and only if the move is allowed and was made.
      */
-
     private boolean applyMove(int player, int col) {
-        CellState[] column = new CellState[h];
-        int lastRow = h;
-        for (int j = h - 1; j >= 0; j--) {
+        CellState[] column = new CellState[height];
+        int lastRow = height;
+        for (int j = height - 1; j >= 0; j--) {
             column[j] = cellStates[j][col];
-            if (column[j] == CellState.EMPTY && lastRow == h) {
+            if (column[j] == CellState.EMPTY && lastRow == height) {
                 lastRow = j;
             }
         }
@@ -142,50 +196,55 @@ public class State {
         }
     }
 
+    /**
+     * Checks if there are 4 in a row, column or diagonal. (Commented code allows checking for 3 in a row)
+     *
+     * @return The type of player that won. If no player currently has victory, then {@link CellState#EMPTY} is returned.
+     */
     public CellState checkWin() {
-        for (int i = 0; i < h; i++) {
-            for (int j = 0; j < w; j++) {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
                 CellState temp = cellStates[i][j];
                 if (temp == CellState.EMPTY)
                     continue;
-//                if (j < w - 2) {
+//                if (j < width - 2) {
 //                    if (cellStates[i][j + 1] == temp && cellStates[i][j + 2] == temp) {
 //                        return temp;
 //                    }
-//                    if (i < h - 2) {
+//                    if (i < height - 2) {
 //                        if (cellStates[i + 1][j + 1] == temp && cellStates[i + 2][j + 2] == temp) {
 //                            return temp;
 //                        }
 //                    }
 //                }
-//                if (i < h - 2) {
+//                if (i < height - 2) {
 //                    if (cellStates[i + 1][j] == temp && cellStates[i + 2][j] == temp) {
 //                        return temp;
 //                    }
 //                }
-//                if (i > 2 && j < w - 2) {
+//                if (i > 2 && j < width - 2) {
 //                    if (cellStates[i - 1][j + 1] == temp && cellStates[i - 2][j + 2] == temp) {
 //                        return temp;
 //                    }
 //                }
 
 
-                if (j < w - 3) {
+                if (j < width - 3) {
                     if (cellStates[i][j + 1] == temp && cellStates[i][j + 2] == temp && cellStates[i][j + 3] == temp) {
                         return temp;
                     }
-                    if (i < h - 3) {
+                    if (i < height - 3) {
                         if (cellStates[i + 1][j + 1] == temp && cellStates[i + 2][j + 2] == temp && cellStates[i + 3][j + 3] == temp) {
                             return temp;
                         }
                     }
                 }
-                if (i < h - 3) {
+                if (i < height - 3) {
                     if (cellStates[i + 1][j] == temp && cellStates[i + 2][j] == temp && cellStates[i + 3][j] == temp) {
                         return temp;
                     }
                 }
-                if (i > 3 && j < w - 3) {
+                if (i > 3 && j < width - 3) {
                     if (cellStates[i - 1][j + 1] == temp && cellStates[i - 2][j + 2] == temp && cellStates[i - 3][j + 3] == temp) {
                         return temp;
                     }

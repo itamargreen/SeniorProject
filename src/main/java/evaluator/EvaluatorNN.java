@@ -1,6 +1,7 @@
-package neuralNets;
+package evaluator;
 
 import GameObjects.BoardWinPair;
+import GameObjects.State;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -26,7 +27,7 @@ import java.util.Random;
 /**
  * Created by itamar on 24-Apr-17.
  */
-public class NetworkTest {
+public class EvaluatorNN {
     public static final int seed = 12345;
     //Number of iterations per minibatch
     public static final int iterations = 30;
@@ -150,6 +151,31 @@ public class NetworkTest {
         }
 
 
+    }
+
+    public static int bestColumnFromHere(State game) {
+        System.out.println("entered \"brute force\" best column selector");
+        int bestColumn = -1;
+        double max = -100;
+        State nextMoveState;
+        for (int column = 0; column < 7; column++) {
+            nextMoveState = new State(game);
+            nextMoveState.makeMove(-1, column);
+
+            double[][] boardArray = new double[1][];
+
+            boardArray[0] = nextMoveState.convertToArray();
+            INDArray input = Nd4j.create(boardArray);
+            INDArray output = net.output(input, false);
+            if (output.isScalar()) {
+                double evaluated = output.meanNumber().doubleValue();
+                if(evaluated > max){
+                    bestColumn = column;
+                    max = evaluated;
+                }
+            }
+        }
+        return bestColumn;
     }
 
     public static double testNetwork(BoardWinPair pair) {
