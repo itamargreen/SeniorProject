@@ -15,7 +15,7 @@ import com.diffplug.common.base.TreeNode;
 public class WinAssessment {
     public static boolean[] fill;
     public static double diff = 0;
-
+private static double loseWeight = 0.05;
     private static int count = 0;
     private static double countBlue = 0;
     private static double countRed = 0;
@@ -59,7 +59,7 @@ public class WinAssessment {
     private static void formLayer(TreeNode<State> node, int player, TreeNode<State> parentNode, int depth) {
         State current = node.getContent();
 
-        if (/*(Math.abs(r1-r2)/Math.max(countBlue,countRed)> 0.35 && count>1000000 )|| */count > 700000) {
+        if (/*(Math.abs(r1-r2)/Math.max(countBlue,countRed)> 0.35 && count>1000000 )|| */count > 1000000) {
 
             return;
         }
@@ -77,12 +77,22 @@ public class WinAssessment {
                 }
                 count++;
                 if (!next.checkWin().equals(CellState.EMPTY)) {
-                    switch (next.checkWin()) {
-                        case BLUE:
-                            countBlue += (1 / Math.pow(depth, 1));
-                        case RED:
-                            countRed += (1 / Math.pow(depth, 1));
+                    if(depth == 1){
+                        switch (next.checkWin()) {
+                            case BLUE:
+                                countBlue += 3;
+                            case RED:
+                                countRed += 3;
+                        }
+                    }else{
+                        switch (next.checkWin()) {
+                            case BLUE:
+                                countBlue += ((1+loseWeight) / Math.pow(depth, 1));
+                            case RED:
+                                countRed += (1 / Math.pow(depth, 1));
+                        }
                     }
+
 
                 }
                 TreeNode<State> nextNode = new TreeNode<State>(node, next, next.getWidth());

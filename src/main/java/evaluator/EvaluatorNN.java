@@ -2,6 +2,8 @@ package evaluator;
 
 import GameObjects.BoardWinPair;
 import GameObjects.State;
+import data.write.WriteToRecordsFile;
+import manualGame.Board;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -20,9 +22,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Created by itamar on 24-Apr-17.
@@ -42,6 +42,8 @@ public class EvaluatorNN {
     public static final Random rng = new Random(seed);
     private static MultiLayerNetwork net = null;
     private static boolean flag = false;
+    private static List<BoardWinPair> records = new ArrayList<>();
+    private static File recordFile = recordFile = new File(System.getenv("AppData") + "\\SeniorProjectDir\\records.txt");
 
     public static MultiLayerNetwork getNet() {
         return net;
@@ -49,11 +51,63 @@ public class EvaluatorNN {
 
     public static void loadNN(File model) {
         try {
+
             MultiLayerNetwork restored = ModelSerializer.restoreMultiLayerNetwork(model);
             net = restored.clone();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void loadNN(File model, List<BoardWinPair> records) {
+        firstNeuralTest(records, 42, model);
+    }
+
+    public static void train(File model, int totalSize) {
+
+        double[][] inputData = new double[records.size()][totalSize];
+        double[][] outputData = new double[records.size()][1];
+
+        for (int i = 0; i < inputData.length; i++) {
+            inputData[i] = records.get(i).getBoard();
+            outputData[i] = new double[]{records.get(i).getOutcome()};
+        }
+
+
+        INDArray input = Nd4j.create(inputData);
+        INDArray output = Nd4j.create(outputData);
+        DataSet dataSet = new DataSet(input, output);
+        List<DataSet> list = dataSet.asList();
+        Collections.shuffle(list);
+        Collections.shuffle(list);
+        Collections.shuffle(list);
+        DataSetIterator iterator = new ListDataSetIterator(list, records.size());
+        System.out.println("start training #2");
+        int epoch = 1;
+        do {
+
+            iterator = new ListDataSetIterator(list, epoch);
+            net.fit(iterator);
+            epoch++;
+        } while (epoch < list.size());
+        INDArray testIn = list.get(list.size() - 1).getFeatures();
+        INDArray outputT = net.output(testIn);
+        if (outputT.isScalar()) {
+            System.out.println(outputT.getScalar(0, 0) + " after whatever");
+        }
+
+        try {
+            ModelSerializer.writeModel(net, model, true);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("finished training #2");
+    }
+
+    public static void addPair(BoardWinPair... pairs) {
+        EvaluatorNN.records.addAll(Arrays.asList(pairs));
+        //WriteToRecordsFile.writeRecords(EvaluatorNN.records, recordFile);
     }
 
     public static void firstNeuralTest(List<BoardWinPair> records, int totalSize, File model) {
@@ -70,16 +124,18 @@ public class EvaluatorNN {
 
                     .list()
                     .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-                            .activation(Activation.SOFTMAX)
+                            .activation(Activation.CUBE)
                             .build())
                     .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3)
                             .activation(Activation.RELU)
                             .build())
                     .layer(2, new DenseLayer.Builder().nIn(nHidden / 3).nOut((nHidden / 3) * 2)
+                            .activation(Activation.TANH)
+                            .build())
+                    .layer(3, new DenseLayer.Builder().nIn((nHidden / 3) * 2).nOut((nHidden / 3) * 2)
                             .activation(Activation.RELU)
                             .build())
-
-                    .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                    .layer(4, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                             .activation(Activation.IDENTITY)
                             .nIn((nHidden / 3) * 2).nOut(numOutputs).build())
                     .pretrain(false).backprop(true).build()
@@ -88,7 +144,6 @@ public class EvaluatorNN {
             net.init();
             net.setListeners(new ScoreIterationListener(1));
         }
-
 
         double[][] inputData = new double[records.size()][totalSize];
         double[][] outputData = new double[records.size()][1];
@@ -108,13 +163,13 @@ public class EvaluatorNN {
         Collections.shuffle(list);
         DataSetIterator iterator = new ListDataSetIterator(list, records.size());
         System.out.println("start training");
-        int epoch = 0;
+        int epoch = 1;
         do {
-            iterator.reset();
-            net.fit(iterator);
 
+            iterator = new ListDataSetIterator(list, epoch);
+            net.fit(iterator);
             epoch++;
-        } while (epoch < iterations + 1);
+        } while (epoch < list.size());
 
 
         try {
@@ -123,15 +178,20 @@ public class EvaluatorNN {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        EvaluatorNN.records.addAll(records);
 
     }
 
-    public static int bestColumnFromHere(State game) {
+    public static List<BoardWinPair> getRecords() {
+        return records;
+    }
+
+    public static double[] bestColumnFromHere(State game) {
         System.out.println("entered \"brute force\" best column selector");
-        int bestColumn = -1;
+        double[] bestColumn = new double[game.getWidth()];
         double max = -100;
         State nextMoveState;
+
         for (int column = 0; column < 7; column++) {
             nextMoveState = new State(game);
             nextMoveState.makeMove(-1, column);
@@ -143,8 +203,9 @@ public class EvaluatorNN {
             INDArray output = net.output(input, false);
             if (output.isScalar()) {
                 double evaluated = output.meanNumber().doubleValue();
-                if(evaluated > max){
-                    bestColumn = column;
+                if (evaluated > max) {
+                    Arrays.fill(bestColumn, 0);
+                    bestColumn[column] = 1;
                     max = evaluated;
                 }
             }
