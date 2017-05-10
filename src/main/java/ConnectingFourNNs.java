@@ -61,8 +61,9 @@ public class ConnectingFourNNs {
         }
         model = new File(env + "\\model.zip");
         chooser = new File(env + "\\chooser.zip");
-        EvaluatorNN.loadNN(model);
         record = RestoreRecordFile.readRecords(recordFile);
+        EvaluatorNN.loadNN(model);
+
         networkCoordinator = new BoardNetworkCoordinator(chooser, recordColumnFile);
         networkCoordinator.createChooser(6, 7);
         Board b = new Board(7, 6, env, dataFileDir, recordFile, model, record, networkCoordinator);

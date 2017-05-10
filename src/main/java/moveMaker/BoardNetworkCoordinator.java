@@ -20,7 +20,7 @@ public class BoardNetworkCoordinator {
     private List<BoardColumnPair> pairs;
 
     public BoardNetworkCoordinator(File chooserFile, File recordsColumn) {
-        this.pairs = new ArrayList<BoardColumnPair>();
+        this.pairs = new ArrayList<>();
         this.chooserFile = chooserFile;
         setRecordsColumn(recordsColumn);
     }
@@ -29,23 +29,23 @@ public class BoardNetworkCoordinator {
         return pairs;
     }
 
-    public void setPairs(List<BoardColumnPair> pairs) {
-        this.pairs = pairs;
-    }
+
 
     public void addPair(BoardColumnPair... pair) {
         List<BoardColumnPair> pairList = Arrays.asList(pair);
         this.pairs.addAll(pairList);
+        WriteToRecordsFile.writeColumnRecords(this.pairs,recordsColumn);
     }
 
     public int getNNAction(State game) {
         double res = chooser.chooseColumn(game);
-        int result = (int) Math.round(res);
-        return result;
+        return (int) Math.round(res);
+
     }
 
     public void setRecordsColumn(File recordsColumn) {
         this.recordsColumn = recordsColumn;
+        this.pairs = RestoreRecordFile.readColumnRecords(this.recordsColumn);
     }
 
     /**
@@ -76,16 +76,9 @@ public class BoardNetworkCoordinator {
 
     public void trainChooser() {
         System.out.println("entered general trainer in coordinator");
-        //List<BoardColumnPair> pairList = RestoreRecordFile.readColumnRecords(recordsColumn);
+        List<BoardColumnPair> pairList = RestoreRecordFile.readColumnRecords(recordsColumn);
+        this.pairs = pairList;
         this.chooser.doTraining(this.pairs);
     }
 
-    public void trainChooser(BoardColumnPair pair) {
-        System.out.println("entered single pair trainer in coordinator");
-        pairs = RestoreRecordFile.readColumnRecords(recordsColumn);
-        pairs.add(pair);
-        WriteToRecordsFile.writeColumnRecords(this.pairs, recordsColumn);
-
-
-    }
 }
