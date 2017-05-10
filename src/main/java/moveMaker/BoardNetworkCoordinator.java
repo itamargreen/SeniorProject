@@ -1,11 +1,9 @@
-package MoveMaker;
+package moveMaker;
 
 import GameObjects.BoardColumnPair;
-import GameObjects.BoardWinPair;
 import GameObjects.State;
 import data.restore.RestoreRecordFile;
 import data.write.WriteToRecordsFile;
-import org.deeplearning4j.util.ModelSerializer;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,17 +19,23 @@ public class BoardNetworkCoordinator {
     private ColumnChooser chooser;
     private List<BoardColumnPair> pairs;
 
+    public BoardNetworkCoordinator(File chooserFile, File recordsColumn) {
+        this.pairs = new ArrayList<BoardColumnPair>();
+        this.chooserFile = chooserFile;
+        setRecordsColumn(recordsColumn);
+    }
+
     public List<BoardColumnPair> getPairs() {
         return pairs;
+    }
+
+    public void setPairs(List<BoardColumnPair> pairs) {
+        this.pairs = pairs;
     }
 
     public void addPair(BoardColumnPair... pair) {
         List<BoardColumnPair> pairList = Arrays.asList(pair);
         this.pairs.addAll(pairList);
-    }
-
-    public void setPairs(List<BoardColumnPair> pairs) {
-        this.pairs = pairs;
     }
 
     public int getNNAction(State game) {
@@ -70,10 +74,10 @@ public class BoardNetworkCoordinator {
         return (chooser == null);
     }
 
-    private void trainChooser() {
+    public void trainChooser() {
         System.out.println("entered general trainer in coordinator");
-        List<BoardColumnPair> pairList = RestoreRecordFile.readColumnRecords(recordsColumn);
-        this.chooser.doTraining(pairList);
+        //List<BoardColumnPair> pairList = RestoreRecordFile.readColumnRecords(recordsColumn);
+        this.chooser.doTraining(this.pairs);
     }
 
     public void trainChooser(BoardColumnPair pair) {
@@ -83,11 +87,5 @@ public class BoardNetworkCoordinator {
         WriteToRecordsFile.writeColumnRecords(this.pairs, recordsColumn);
 
 
-    }
-
-    public BoardNetworkCoordinator(File chooserFile, File recordsColumn) {
-        this.pairs = new ArrayList<BoardColumnPair>();
-        this.chooserFile = chooserFile;
-        setRecordsColumn(recordsColumn);
     }
 }

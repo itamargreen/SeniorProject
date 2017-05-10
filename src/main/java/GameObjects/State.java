@@ -5,11 +5,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * This object is used everywhere. It is an object used for describing a board (not to be confused with {@link ManualGame.Board}, which does something else).
+ * This object is used everywhere. It is an object used for describing a board (not to be confused with {@link manualGame.Board}, which does something else).
  * <p>
  * Has a handful of methods that make using the information it stores very simple
  *
- * @see ManualGame.Board
+ * @see manualGame.Board
  * Created by Itamar.
  */
 public class State {
