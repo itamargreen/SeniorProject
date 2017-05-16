@@ -30,11 +30,11 @@ public class WriteToRecordsFile {
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(recordFile));
 
-
+String line = "";
             for (BoardWinPair pair : records) {
                 double[] input = pair.getBoard();
                 double out = pair.getOutcome();
-                String line = Arrays.toString(input);
+                line = Arrays.toString(input);
                 line = line.replaceAll("\\[", "");
                 line = line.replaceAll("\\]", "");
                 line = line.replaceAll("\\s", "");
@@ -42,12 +42,25 @@ public class WriteToRecordsFile {
                 bw.append(line);
                 bw.newLine();
             }
+            presentSave(line);
             bw.flush();
             bw.close();
 
 
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void presentSave(String text) {
+        String line = text.split(":")[0];
+        String[]values = line.split(",");
+        for (int i = 0; i < values.length; i++) {
+            System.out.print(values[i]+",");
+            if(i%6==0 && i>0){
+                System.out.println();
+            }
+
         }
     }
 
@@ -66,12 +79,18 @@ public class WriteToRecordsFile {
 
             for (BoardColumnPair pair : records) {
                 double[] input = pair.getBoard();
-                double out = pair.getColumn();
+                double[] out = pair.getColumn();
                 String line = Arrays.toString(input);
+                String outLine = Arrays.toString(out);
                 line = line.replaceAll("\\[", "");
                 line = line.replaceAll("\\]", "");
                 line = line.replaceAll("\\s", "");
-                line += ":" + out;
+
+                outLine = outLine.replaceAll("\\[", "");
+                outLine = outLine.replaceAll("\\]", "");
+                outLine = outLine.replaceAll("\\s", "");
+
+                line += ":" + outLine;
                 bw.append(line);
                 bw.newLine();
             }

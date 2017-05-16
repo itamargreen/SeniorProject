@@ -23,6 +23,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -86,7 +87,7 @@ public class ColumnChooser {
         int totalSize = height * width;
         int numInput = totalSize;
         int nHidden = totalSize * 2;
-        int numOutputs = 1;
+        int numOutputs = 7;
 
 //        if (saveFile2.exists()) {
 //            try {
@@ -124,30 +125,20 @@ public class ColumnChooser {
                         .nIn((nHidden)/ 3).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
 //        }
-        double[] labelArray = new double[width];
+        double[][] labelArray = new double[width][width];
         for (int i = 0; i < labelArray.length; i++) {
-            labelArray[i] = (double) i;
+            Arrays.fill(labelArray[i], 0);
+            labelArray[i][i] = 1.0;
 
         }
         this.labels = Nd4j.create(labelArray);
         net = new MultiLayerNetwork(configuration);
-        File bestModel = new File(System.getenv("AppData") + "\\SeniorProjectDir\\bestModel.bin");
-        if (saveFile.exists()) {
-            try {
-                System.out.println("loaded best model 1");
-                /**net = **/ModelSerializer.restoreMultiLayerNetwork(saveFile);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-//        } else if (bestModel.exists()) {
-//            try {
-//                System.out.println("loaded best model 2");
-//                net = saver.getBestModel();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
+
+        net.init();
+        net.setLabels(labels);
+        net.setListeners(new ScoreIterationListener(1));
+
+
     }
 
     /**
@@ -158,10 +149,11 @@ public class ColumnChooser {
 
 
         double[][] inputArray = new double[boardColumnPairs.size()][height * width];
-        double[][] outputArray = new double[boardColumnPairs.size()][1];
+        double[][] outputArray = new double[boardColumnPairs.size()][width];
         for (int i = 0; i < inputArray.length; i++) {
             inputArray[i] = boardColumnPairs.get(i).getBoard();
-            outputArray[i] = new double[]{boardColumnPairs.get(i).getColumn()};
+            int index = (int) boardColumnPairs.get(i).getColumnSingle();
+            outputArray[i][index] = 1.0;
         }
 
         INDArray input = Nd4j.create(inputArray);
@@ -171,35 +163,42 @@ public class ColumnChooser {
         List<DataSet> list = dataSet.asList();
         List<DataSet> trainData = list.subList(0, (list.size() / 3) * 2);
         List<DataSet> testData = list.subList((list.size() / 3) * 2, list.size());
-        DataSetIterator iterator = new ListDataSetIterator(list, list.size());
+
+      
+        DataSetIterator iterator = new ListDataSetIterator(list, 1);
+
 //        DataSetIterator myTrainData = new ListDataSetIterator(trainData, trainData.size());
 //        DataSetIterator myTestData = new ListDataSetIterator(testData, testData.size());
 //
 //
 //        EarlyStoppingConfiguration esConf = new EarlyStoppingConfiguration.Builder()
 //                .epochTerminationConditions(new MaxEpochsTerminationCondition(30))
-//                .iterationTerminationConditions(new MaxTimeIterationTerminationCondition(20, TimeUnit.MINUTES))
-//                .scoreCalculator(new DataSetLossCalculator(myTestData, true))
-//                .evaluateEveryNEpochs(2)
-//                .modelSaver(saver)
+
 //                .build();
 //
 //
 //        EarlyStoppingTrainer trainer = new EarlyStoppingTrainer(esConf, configuration, myTrainData);
 //        System.out.println("started early training");
 //        EarlyStoppingResult result = trainer.fit();
-//        net = (MultiLayerNetwork) result.getBestModel();
-//        System.out.println("finished early training");
 
-        int epoch = 0;
+        int epoch = 1;
         do {
-            iterator.reset();
+            iterator = new ListDataSetIterator(list, epoch);
             net.fit(iterator);
             epoch++;
-        } while (epoch < 15);
+        } while (epoch < list.size());
+//        iterator = new ListDataSetIterator(list, list.size());
+//        while(epoch<30){
+//            iterator.reset();
+//            net.fit(iterator);
+//            epoch++;
+//        }
+
+
         System.out.println("finished training");
-        net.setListeners(new ScoreIterationListener(1));
-        net.setLabels(labels);
+
+
+
         System.out.println("writing to file in chooser");
         try {
             ModelSerializer.writeModel(net, saveFile, true);
@@ -226,15 +225,20 @@ public class ColumnChooser {
         boardArray[0] = gameState.convertToArray();
 
         INDArray input = Nd4j.create(boardArray);
-        try {
-            INDArray output = net.output(input, false);
-            if (output.isScalar()) {
-                return output.getDouble(0, 0);
-            } else {
-                return -1.0;
+        INDArray output = net.output(input, false);
+        if(output.isRowVector()){
+            double max = -10;
+            int index = -10;
+            for (int i = 0; i < width; i++) {
+                if(output.getRow(0).getDouble(0,i)>max){
+                    max = output.getRow(0).getDouble(0,i);
+                    index = i;
+                }
+
             }
-        }catch (Exception e){
-            e.printStackTrace();
+            return index;
+
+
         }
         return -1.0;
 

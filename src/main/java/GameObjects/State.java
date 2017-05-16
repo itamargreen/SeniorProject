@@ -96,7 +96,7 @@ public class State {
      * <td>-1.0</td>
      * <td>1.0</td>
      * </tr>
-     *
+     * <p>
      * </table></center>
      *
      * @return an array of doubles converted with the above table.
@@ -104,6 +104,7 @@ public class State {
     public double[] convertToArray() {
         List<Double> temp = new ArrayList<Double>();
         double[] res = new double[width * height];
+
         for (int i = 0; i < height; i++) {
 
             for (int j = 0; j < width; j++) {
@@ -132,6 +133,33 @@ public class State {
 
         return res;
     }
+
+    public void fromArray(double[] boardArray) {
+
+        for (int i = 0; i < height * width; i++) {
+
+
+            int temp = (int) boardArray[i];
+            int j = i%width;
+            switch (temp) {
+                case 1:
+                    cellStates[i][j] = CellState.BLUE;
+                    break;
+                case -1:
+                    cellStates[i][j] = CellState.RED;
+                    break;
+                case 0:
+                    cellStates[i][j] = CellState.EMPTY;
+                    break;
+
+            }
+
+
+        }
+
+
+    }
+
 
     /**
      * This method is called externally, and handles telling the caller if the move happened or not.

@@ -15,6 +15,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
@@ -179,6 +180,19 @@ public class Board extends JFrame implements MouseListener, WindowListener {
             }
         });
 
+        JButton loadLatest = new JButton("load latest");
+        loadLatest.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                List<BoardWinPair> forLatest = record;
+                gameState.fromArray(forLatest.get(forLatest.size() - 1).getBoard());
+                panel.setState(gameState);
+                repaint();
+                JOptionPane.showMessageDialog(null, "loaded latest game");
+
+            }
+        });
+
 
         container.add(calculate);
         container.add(eval);
@@ -186,6 +200,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         container.add(whenAddingRecord);
         container.add(player);
         container.add(writeToFile);
+        container.add(loadLatest);
 
         layout.putConstraint(SpringLayout.WEST, calculate, 20, SpringLayout.WEST, container);
         layout.putConstraint(SpringLayout.NORTH, calculate, 10, SpringLayout.NORTH, container);
@@ -207,8 +222,10 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         layout.putConstraint(SpringLayout.NORTH, createTrainingSetForChooser, 15, SpringLayout.SOUTH, discardList);
         layout.putConstraint(SpringLayout.WEST, autoCreateDataSet, 0, SpringLayout.WEST, eval);
         layout.putConstraint(SpringLayout.NORTH, autoCreateDataSet, 15, SpringLayout.SOUTH, eval);
+        layout.putConstraint(SpringLayout.WEST, loadLatest, 0, SpringLayout.WEST, createTrainingSetForChooser);
+        layout.putConstraint(SpringLayout.NORTH, loadLatest, 15, SpringLayout.SOUTH, createTrainingSetForChooser);
 
-        frame.setPreferredSize(new Dimension(350, 200));
+        frame.setPreferredSize(new Dimension(350, 300));
         double x = getContentPane().getLocationOnScreen().getX() + (boardWidth * 50 + 100);
         double y = getContentPane().getLocationOnScreen().getY() + 10;
         frame.setLocation((int) (x + 10), (int) y);
@@ -295,6 +312,17 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         TreeNode<State> future = WinAssessment.assessWin(gameState, -1);
         return WinAssessment.diff;
     }
+
+    private void trainEvaluator(State gameState) {
+        double[] input = gameState.convertToArray();
+        double out = doThing();
+        BoardWinPair pair = new BoardWinPair(input, out);
+        this.record.add(pair);
+        whenAddingRecord.setText("now has " + record.size() + " records");
+        EvaluatorNN.addPair(pair);
+        EvaluatorNN.train(model, gameState.getWidth() * gameState.getHeight());
+    }
+
 
     /**
      * This calls the coordinator for the chooser neural network, and applies the chooser's output as the computer made move.
@@ -406,13 +434,12 @@ public class Board extends JFrame implements MouseListener, WindowListener {
                 repaint();
                 if (autoCreateDataSet.isSelected()) {
                     createChooserTrainSet(gameState);
+
+              
                 }
                 if (playerTurn == -1) {
                     System.out.println("Computer making move");
-                    moveMade(gameState);
-//
-//
-//                    //trainChooser(gameState); //For training the chooser
+                    //  moveMade(gameState);
                 }
 
                 break;
@@ -429,6 +456,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     }
 
     public void windowClosing(WindowEvent e) {
+
         if (autoCreateDataSet.isSelected())
             networkCoordinator.trainChooser();
         System.exit(0);
