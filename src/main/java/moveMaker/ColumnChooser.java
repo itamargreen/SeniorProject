@@ -3,13 +3,7 @@ package moveMaker;
 import GameObjects.BoardColumnPair;
 import GameObjects.State;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
-import org.deeplearning4j.earlystopping.EarlyStoppingConfiguration;
-import org.deeplearning4j.earlystopping.EarlyStoppingResult;
 import org.deeplearning4j.earlystopping.saver.LocalFileModelSaver;
-import org.deeplearning4j.earlystopping.scorecalc.DataSetLossCalculator;
-import org.deeplearning4j.earlystopping.termination.MaxEpochsTerminationCondition;
-import org.deeplearning4j.earlystopping.termination.MaxTimeIterationTerminationCondition;
-import org.deeplearning4j.earlystopping.trainer.EarlyStoppingTrainer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -20,6 +14,7 @@ import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
+import org.nd4j.linalg.activations.IActivation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
@@ -29,7 +24,6 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This class contains the Neural Network which is the core of this program. This makes the choices for the computer's moves in the game. I have no idea how it actually manages to give the correct choice, but that's true for all neural networks.
@@ -45,6 +39,7 @@ public class ColumnChooser {
     private MultiLayerNetwork net = null;
     private List<BoardColumnPair> boardColumnPairs;
     private MultiLayerConfiguration configuration;
+    private LocalFileModelSaver saver;
     private File saveFile;
     private File saveFile2;
     private int height;
@@ -66,7 +61,9 @@ public class ColumnChooser {
         this.height = height;
         this.boardColumnPairs = boardColumnPairs;
         this.saveFile = saved;
+        saver = new LocalFileModelSaver(saveFile2.getPath());
         createColumnChooser();
+
 
         //trainNN();
     }
@@ -100,28 +97,31 @@ public class ColumnChooser {
 //                e.printStackTrace();
 //            }
 //        } else {
-
+        IActivation gauss = new ActivationGauss();
+        double[][] testD = new double[256][1];
+        testD[0] = new double[]{2};
+        INDArray testDD = Nd4j.create(testD);
+        //gauss.getActivation(testDD, false);
         configuration = new NeuralNetConfiguration.Builder()
-                .seed(seed)
+                .seed(1562)
                 .iterations(iterations)
-                .optimizationAlgo(OptimizationAlgorithm.LBFGS)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .learningRate(learningRate)
                 .weightInit(WeightInit.XAVIER)
 
                 .list()
                 .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-                        .activation(Activation.SOFTMAX)
+                        .activation(Activation.RELU)
                         .build())
-                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3)
-                        .activation(Activation.SOFTMAX)
-                        .build())
-                .layer(2, new DenseLayer.Builder().nIn(nHidden / 3).nOut((nHidden / 3) * 2)
-                        .activation(Activation.SOFTMAX)
+                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden/3)
+                        .activation(Activation.ELU)
                         .build())
 
-                .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+
+
+                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                         .activation(Activation.IDENTITY)
-                        .nIn((nHidden / 3) * 2).nOut(numOutputs).build())
+                        .nIn((nHidden)/ 3).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
 //        }
         double[] labelArray = new double[width];
@@ -130,7 +130,24 @@ public class ColumnChooser {
 
         }
         this.labels = Nd4j.create(labelArray);
-
+        net = new MultiLayerNetwork(configuration);
+        File bestModel = new File(System.getenv("AppData") + "\\SeniorProjectDir\\bestModel.bin");
+        if (saveFile.exists()) {
+            try {
+                System.out.println("loaded best model 1");
+                /**net = **/ModelSerializer.restoreMultiLayerNetwork(saveFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+//        } else if (bestModel.exists()) {
+//            try {
+//                System.out.println("loaded best model 2");
+//                net = saver.getBestModel();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     /**
@@ -154,32 +171,41 @@ public class ColumnChooser {
         List<DataSet> list = dataSet.asList();
         List<DataSet> trainData = list.subList(0, (list.size() / 3) * 2);
         List<DataSet> testData = list.subList((list.size() / 3) * 2, list.size());
-        DataSetIterator myTrainData = new ListDataSetIterator(trainData, trainData.size());
-        DataSetIterator myTestData = new ListDataSetIterator(testData, testData.size());
+        DataSetIterator iterator = new ListDataSetIterator(list, list.size());
+//        DataSetIterator myTrainData = new ListDataSetIterator(trainData, trainData.size());
+//        DataSetIterator myTestData = new ListDataSetIterator(testData, testData.size());
+//
+//
+//        EarlyStoppingConfiguration esConf = new EarlyStoppingConfiguration.Builder()
+//                .epochTerminationConditions(new MaxEpochsTerminationCondition(30))
+//                .iterationTerminationConditions(new MaxTimeIterationTerminationCondition(20, TimeUnit.MINUTES))
+//                .scoreCalculator(new DataSetLossCalculator(myTestData, true))
+//                .evaluateEveryNEpochs(2)
+//                .modelSaver(saver)
+//                .build();
+//
+//
+//        EarlyStoppingTrainer trainer = new EarlyStoppingTrainer(esConf, configuration, myTrainData);
+//        System.out.println("started early training");
+//        EarlyStoppingResult result = trainer.fit();
+//        net = (MultiLayerNetwork) result.getBestModel();
+//        System.out.println("finished early training");
 
-
-        EarlyStoppingConfiguration esConf = new EarlyStoppingConfiguration.Builder()
-                .epochTerminationConditions(new MaxEpochsTerminationCondition(30))
-                .iterationTerminationConditions(new MaxTimeIterationTerminationCondition(5, TimeUnit.MINUTES))
-                .scoreCalculator(new DataSetLossCalculator(myTestData, true))
-                .evaluateEveryNEpochs(1)
-                .modelSaver(new LocalFileModelSaver(saveFile2.getPath()))
-                .build();
-
-
-        EarlyStoppingTrainer trainer = new EarlyStoppingTrainer(esConf, configuration, myTrainData);
-        System.out.println("started early training");
-        EarlyStoppingResult result = trainer.fit();
-        net = (MultiLayerNetwork) result.getBestModel();
-        System.out.println("finished early training");
+        int epoch = 0;
+        do {
+            iterator.reset();
+            net.fit(iterator);
+            epoch++;
+        } while (epoch < 15);
+        System.out.println("finished training");
         net.setListeners(new ScoreIterationListener(1));
         net.setLabels(labels);
         System.out.println("writing to file in chooser");
-//        try {
-//            ModelSerializer.writeModel(net, saveFile, true);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            ModelSerializer.writeModel(net, saveFile, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         System.out.println("finished trainNN in chooser");
 
@@ -200,12 +226,17 @@ public class ColumnChooser {
         boardArray[0] = gameState.convertToArray();
 
         INDArray input = Nd4j.create(boardArray);
-        INDArray output = net.output(input, false);
-        if (output.isScalar()) {
-            return output.getDouble(0, 0);
-        } else {
-            return -1.0;
+        try {
+            INDArray output = net.output(input, false);
+            if (output.isScalar()) {
+                return output.getDouble(0, 0);
+            } else {
+                return -1.0;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
+        return -1.0;
 
     }
 

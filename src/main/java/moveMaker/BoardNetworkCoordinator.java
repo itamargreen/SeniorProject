@@ -36,6 +36,7 @@ public class BoardNetworkCoordinator {
     public void addPair(BoardColumnPair... pair) {
         List<BoardColumnPair> pairList = Arrays.asList(pair);
         this.pairs.addAll(pairList);
+        WriteToRecordsFile.writeColumnRecords(this.pairs,recordsColumn);
     }
 
     public int getNNAction(State game) {
@@ -76,7 +77,7 @@ public class BoardNetworkCoordinator {
 
     public void trainChooser() {
         System.out.println("entered general trainer in coordinator");
-        //List<BoardColumnPair> pairList = RestoreRecordFile.readColumnRecords(recordsColumn);
+        pairs = RestoreRecordFile.readColumnRecords(recordsColumn);
         this.chooser.doTraining(this.pairs);
     }
 

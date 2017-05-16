@@ -303,7 +303,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      */
     private void moveMade(State game) {
         System.out.println("entered move maker method in board");
-        networkCoordinator.trainChooser();
+        //networkCoordinator.trainChooser();
         //System.out.println("trained chooser from board");
         int result = networkCoordinator.getNNAction(game);
         if (result < 7 && result > -1) {
@@ -404,7 +404,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
                 panel.setState(gameState);
 
                 repaint();
-                if (autoCreateDataSet.isSelected()){
+                if (autoCreateDataSet.isSelected()) {
                     createChooserTrainSet(gameState);
                 }
                 if (playerTurn == -1) {
@@ -429,8 +429,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     }
 
     public void windowClosing(WindowEvent e) {
-
-        //WriteToRecordsFile.writeRecords(record, recordFile);
+        if (autoCreateDataSet.isSelected())
+            networkCoordinator.trainChooser();
         System.exit(0);
     }
 
