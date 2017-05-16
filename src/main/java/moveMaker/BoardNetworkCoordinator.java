@@ -76,8 +76,9 @@ public class BoardNetworkCoordinator {
 
     public void trainChooser() {
         System.out.println("entered general trainer in coordinator");
+
         List<BoardColumnPair> pairList = RestoreRecordFile.readColumnRecords(recordsColumn);
-        this.pairs = pairList;
+        this.pairs.addAll(pairList);
         this.chooser.doTraining(this.pairs);
     }
 

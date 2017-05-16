@@ -433,10 +433,9 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
                 repaint();
                 if (autoCreateDataSet.isSelected()) {
-                    trainEvaluator(gameState);
-                    //createChooserTrainSet(gameState);
+                    createChooserTrainSet(gameState);
 
-
+              
                 }
                 if (playerTurn == -1) {
                     System.out.println("Computer making move");
@@ -458,7 +457,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     public void windowClosing(WindowEvent e) {
 
-        networkCoordinator.trainChooser();
+        if (autoCreateDataSet.isSelected())
+            networkCoordinator.trainChooser();
         System.exit(0);
     }
 
