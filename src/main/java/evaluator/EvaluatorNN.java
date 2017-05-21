@@ -2,8 +2,7 @@ package evaluator;
 
 import GameObjects.BoardWinPair;
 import GameObjects.State;
-import data.write.WriteToRecordsFile;
-import manualGame.Board;
+import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -44,9 +43,14 @@ public class EvaluatorNN {
     private static boolean flag = false;
     private static List<BoardWinPair> records = new ArrayList<>();
     private static File recordFile = recordFile = new File(System.getenv("AppData") + "\\SeniorProjectDir\\records.txt");
+    private static StatsStorage storage;
 
     public static MultiLayerNetwork getNet() {
         return net;
+    }
+
+    public static void setStats(StatsStorage stats) {
+        storage = stats;
     }
 
     public static void loadNN(File model) {
@@ -89,7 +93,7 @@ public class EvaluatorNN {
             iterator = new ListDataSetIterator(list, epoch);
             net.fit(iterator);
             epoch++;
-        } while (epoch < list.size());
+        } while (epoch < list.size()+1);
         INDArray testIn = list.get(list.size() - 1).getFeatures();
         INDArray outputT = net.output(testIn);
         if (outputT.isScalar()) {
@@ -107,12 +111,11 @@ public class EvaluatorNN {
 
     public static void addPair(BoardWinPair... pairs) {
         EvaluatorNN.records.addAll(Arrays.asList(pairs));
-        //WriteToRecordsFile.writeRecords(EvaluatorNN.records, recordFile);
     }
 
     public static void firstNeuralTest(List<BoardWinPair> records, int totalSize, File model) {
         int numInput = totalSize;
-        int nHidden = totalSize * 2;
+        int nHidden = totalSize / 2;
         int numOutputs = 1;
         if (net == null) {
             net = new MultiLayerNetwork(new NeuralNetConfiguration.Builder()
@@ -126,16 +129,14 @@ public class EvaluatorNN {
                     .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
                             .activation(Activation.CUBE)
                             .build())
-                    .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3)
+                    .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden/2)
                             .activation(Activation.RELU)
                             .build())
-                    .layer(2, new DenseLayer.Builder().nIn(nHidden / 3).nOut((nHidden / 3) * 2)
+                    .layer(2, new DenseLayer.Builder().nIn(nHidden / 2).nOut((nHidden / 3) * 2)
                             .activation(Activation.TANH)
                             .build())
-                    .layer(3, new DenseLayer.Builder().nIn((nHidden / 3) * 2).nOut((nHidden / 3) * 2)
-                            .activation(Activation.RELU)
-                            .build())
-                    .layer(4, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+
+                    .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                             .activation(Activation.IDENTITY)
                             .nIn((nHidden / 3) * 2).nOut(numOutputs).build())
                     .pretrain(false).backprop(true).build()
@@ -169,7 +170,7 @@ public class EvaluatorNN {
             iterator = new ListDataSetIterator(list, epoch);
             net.fit(iterator);
             epoch++;
-        } while (epoch < list.size());
+        } while (epoch < list.size()+1);
 
 
         try {

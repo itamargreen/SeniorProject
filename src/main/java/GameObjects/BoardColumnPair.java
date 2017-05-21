@@ -1,50 +1,36 @@
 package GameObjects;
 
-import java.util.Arrays;
-
 /**
  * This class is an object that pairs the board to a column. Used as training data for {@link moveMaker.ColumnChooser chooser} neural network
- * <p>
- * Created by Itamar
  *
+ * Created by Itamar
  * @see moveMaker.ColumnChooser
  */
 public class BoardColumnPair {
     private double[] board;
-    private double[] column;
-    private double columnSingle;
+    private double[] columns;
+    private double column;
 
     /**
      * Constructor for BoardColumnPair
      *
-     * @param board  The double array that comes form {@link State#convertToArray()} method
-     * @param column The column of the pair
+     * @param board The double array that comes form {@link State#convertToArray()} method
+     * @param columns The column of the pair
      */
-    public BoardColumnPair(double[] board, double column) {
+//    public BoardColumnPair(double[] board, double column) {
+//        this.board = board;
+//        this.column = column;
+//    }
+    public BoardColumnPair(double[] board, double[] columns) {
         this.board = board;
-        Arrays.fill(this.column, 0);
-this.columnSingle = column;
-        this.column[(int) (column)] = 1;
-    }
-
-    /**
-     * Constructor for BoardColumnPair
-     *
-     * @param board  The double array that comes form {@link State#convertToArray()} method
-     * @param column The column vector of the pair
-     */
-    public BoardColumnPair(double[] board, double[] column) {
-        this.board = board;
-        this.column = column;
-        for (int i = 0; i < column.length; i++) {
-            double v = column[i];
-            if(v == 1.0){
-                this.columnSingle = i;
-                break;
+        this.columns = columns;
+        for (int i = 0; i < columns.length; i++) {
+            if(columns[i]>0.5){
+                this.column = i;
             }
+
         }
     }
-
     public double[] getBoard() {
         return board;
     }
@@ -53,18 +39,15 @@ this.columnSingle = column;
         this.board = board;
     }
 
-    public double[] getColumn() {
-        return column;
-    }
+    //public double getColumn() {
+//        return column;
+//    }
 
     public void setColumn(double column) {
-        Arrays.fill(this.column, 0);
-
-        this.column[(int) (column)] = 1;
-
+        this.column = column;
     }
 
-    public double getColumnSingle() {
-        return columnSingle;
+    public double[] getColumns() {
+        return columns;
     }
 }

@@ -3,6 +3,11 @@ import manualGame.Board;
 import moveMaker.BoardNetworkCoordinator;
 import data.restore.RestoreRecordFile;
 import evaluator.EvaluatorNN;
+import org.deeplearning4j.api.storage.StatsStorage;
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.deeplearning4j.ui.api.UIServer;
+import org.deeplearning4j.ui.stats.StatsListener;
+import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,11 +64,15 @@ public class ConnectingFourNNs {
                 e.printStackTrace();
             }
         }
+        UIServer uiServer = UIServer.getInstance();
+        StatsStorage statsStorage = new InMemoryStatsStorage();
+//        model.setListeners(new StatsListener(),new ScoreIterationListener(1));
+        uiServer.attach(statsStorage);
         model = new File(env + "\\model.zip");
         chooser = new File(env + "\\chooser.zip");
-        record = RestoreRecordFile.readRecords(recordFile);
+        EvaluatorNN.setStats(statsStorage);
         EvaluatorNN.loadNN(model);
-
+        record = RestoreRecordFile.readRecords(recordFile);
         networkCoordinator = new BoardNetworkCoordinator(chooser, recordColumnFile);
         networkCoordinator.createChooser(6, 7);
         Board b = new Board(7, 6, env, dataFileDir, recordFile, model, record, networkCoordinator);
