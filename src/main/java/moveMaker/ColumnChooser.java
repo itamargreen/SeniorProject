@@ -85,8 +85,8 @@ public class ColumnChooser {
     private void createColumnChooser() {
         int totalSize = height * width;
         int numInput = totalSize;
-        int nHidden = totalSize * 2;
-        int numOutputs = 1;
+        int nHidden = totalSize / 2;
+        int numOutputs = width;
 
 //        if (saveFile2.exists()) {
 //            try {
@@ -97,11 +97,7 @@ public class ColumnChooser {
 //                e.printStackTrace();
 //            }
 //        } else {
-        IActivation gauss = new ActivationGauss();
-        double[][] testD = new double[256][1];
-        testD[0] = new double[]{2};
-        INDArray testDD = Nd4j.create(testD);
-        //gauss.getActivation(testDD, false);
+
         configuration = new NeuralNetConfiguration.Builder()
                 .seed(1562)
                 .iterations(iterations)
@@ -124,17 +120,18 @@ public class ColumnChooser {
                         .nIn((nHidden)/ 3).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
 //        }
-        double[] labelArray = new double[width];
+        double[][] labelArray = new double[width][width];
         for (int i = 0; i < labelArray.length; i++) {
-            labelArray[i] = (double) i;
+            labelArray[i][i] = (double)1;
 
         }
         this.labels = Nd4j.create(labelArray);
         net = new MultiLayerNetwork(configuration);
-        File bestModel = new File(System.getenv("AppData") + "\\SeniorProjectDir\\bestModel.bin");
+        net.init();
+        //File bestModel = new File(System.getenv("AppData") + "\\SeniorProjectDir\\bestModel.bin");
         if (saveFile.exists()) {
             try {
-                System.out.println("loaded best model 1");
+                //System.out.println("loaded best model 1");
                 /**net = **/ModelSerializer.restoreMultiLayerNetwork(saveFile);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -158,10 +155,10 @@ public class ColumnChooser {
 
 
         double[][] inputArray = new double[boardColumnPairs.size()][height * width];
-        double[][] outputArray = new double[boardColumnPairs.size()][1];
+        double[][] outputArray = new double[boardColumnPairs.size()][width];
         for (int i = 0; i < inputArray.length; i++) {
             inputArray[i] = boardColumnPairs.get(i).getBoard();
-            outputArray[i] = new double[]{boardColumnPairs.get(i).getColumn()};
+            outputArray[i] = boardColumnPairs.get(i).getColumns();
         }
 
         INDArray input = Nd4j.create(inputArray);
@@ -220,7 +217,7 @@ public class ColumnChooser {
      * @param gameState The state of the board to which the nn responds
      * @return The output from the network which is close to an integer between 0 and the {@link #width}.
      */
-    public double chooseColumn(State gameState) {
+    public double[] chooseColumn(State gameState) {
         System.out.println("entered chooser in chooser");
         double[][] boardArray = new double[1][gameState.getHeight() * gameState.getWidth()];
         boardArray[0] = gameState.convertToArray();
@@ -228,15 +225,20 @@ public class ColumnChooser {
         INDArray input = Nd4j.create(boardArray);
         try {
             INDArray output = net.output(input, false);
-            if (output.isScalar()) {
-                return output.getDouble(0, 0);
+            if (output.isRowVector()) {
+                double[] res = new double[width];
+                for (int i = 0; i < res.length; i++) {
+                    res[i] = output.getDouble(0,i);
+
+                }
+                return res;
             } else {
-                return -1.0;
+                return new double[]{-1.0};
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-        return -1.0;
+        return new double[]{-1.0};
 
     }
 

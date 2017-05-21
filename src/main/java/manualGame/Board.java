@@ -357,6 +357,25 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     }
 
+    private void handleEvaluator() {
+        double[] input = gameState.convertToArray();
+        double out = doThing();
+        BoardWinPair pair = new BoardWinPair(input, out);
+
+        if (EvaluatorNN.getRecords().containsAll(record)) {
+            EvaluatorNN.addPair(pair);
+            record.add(pair);
+        } else {
+            record.add(pair);
+            BoardWinPair[] boardWinPairs = new BoardWinPair[record.size()];
+            record.toArray(boardWinPairs);
+            EvaluatorNN.addPair(boardWinPairs);
+        }
+
+        whenAddingRecord.setText("now has " + record.size() + " records");
+        EvaluatorNN.train(recordFile, 42);//TODO: this should be smarter
+    }
+
     /**
      * Overridden method for painting the components in the JFrame. Needed to ensure the control JFrame's existence
      *
@@ -405,11 +424,12 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
                 repaint();
                 if (autoCreateDataSet.isSelected()) {
-                    createChooserTrainSet(gameState);
+                    handleEvaluator();
+                    //createChooserTrainSet(gameState);
                 }
                 if (playerTurn == -1) {
-                    System.out.println("Computer making move");
-                    moveMade(gameState);
+//                    System.out.println("Computer making move");
+//                    moveMade(gameState);
 //
 //
 //                    //trainChooser(gameState); //For training the chooser

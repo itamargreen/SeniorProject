@@ -66,12 +66,18 @@ public class WriteToRecordsFile {
 
             for (BoardColumnPair pair : records) {
                 double[] input = pair.getBoard();
-                double out = pair.getColumn();
+                double[] out = pair.getColumns();
                 String line = Arrays.toString(input);
+                String outLine = Arrays.toString(out);
                 line = line.replaceAll("\\[", "");
                 line = line.replaceAll("\\]", "");
                 line = line.replaceAll("\\s", "");
-                line += ":" + out;
+
+                outLine = outLine.replaceAll("\\[", "");
+                outLine = outLine.replaceAll("\\]", "");
+                outLine = outLine.replaceAll("\\s", "");
+                
+                line += ":" + outLine;
                 bw.append(line);
                 bw.newLine();
             }

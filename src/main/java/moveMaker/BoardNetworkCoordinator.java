@@ -36,12 +36,20 @@ public class BoardNetworkCoordinator {
     public void addPair(BoardColumnPair... pair) {
         List<BoardColumnPair> pairList = Arrays.asList(pair);
         this.pairs.addAll(pairList);
-        WriteToRecordsFile.writeColumnRecords(this.pairs,recordsColumn);
+        WriteToRecordsFile.writeColumnRecords(this.pairs, recordsColumn);
     }
 
     public int getNNAction(State game) {
-        double res = chooser.chooseColumn(game);
-        int result = (int) Math.round(res);
+        double[] res = chooser.chooseColumn(game);
+        double max = Double.MIN_VALUE;
+        int result = -1;
+        for (int i = 0; i < res.length; i++) {
+            if (res[i] > max) {
+                max = res[i];
+                result = i;
+            }
+
+        }
         return result;
     }
 
