@@ -6,13 +6,12 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.BaseTransformOp;
 import org.nd4j.linalg.api.ops.Op;
 import org.nd4j.linalg.api.ops.TransformOp;
-import org.nd4j.linalg.api.ops.impl.transforms.SigmoidDerivative;
 import org.nd4j.linalg.factory.Nd4j;
 
 /**
  * Created by User on 05-May-17.
  */
-public class Gaussian extends BaseTransformOp {
+class Gaussian extends BaseTransformOp {
     public Gaussian() {
     }
 
@@ -20,11 +19,11 @@ public class Gaussian extends BaseTransformOp {
         super(x, z);
     }
 
-    public Gaussian(INDArray x, INDArray z, long n) {
+    private Gaussian(INDArray x, INDArray z, long n) {
         super(x, z, n);
     }
 
-    public Gaussian(INDArray x, INDArray y, INDArray z, long n) {
+    private Gaussian(INDArray x, INDArray y, INDArray z, long n) {
         super(x, y, z, n);
     }
 
@@ -89,7 +88,7 @@ public class Gaussian extends BaseTransformOp {
 
     private double gaussian(double input) {
         double inputf = input;
-        double val = FastMath.exp(-FastMath.pow(inputf,2));
+        double val = FastMath.exp(-FastMath.pow(inputf, 2));
         if (Nd4j.ENFORCE_NUMERICAL_STABILITY && (Double.isNaN(val) || Double.isInfinite(val))) {
             val = Nd4j.EPS_THRESHOLD;
         }
@@ -103,7 +102,7 @@ public class Gaussian extends BaseTransformOp {
 
     private IComplexNumber gaussian(IComplexNumber number) {
         double arg = number.complexArgument().doubleValue();
-        double gaussArg = FastMath.exp(-FastMath.pow(arg,2));
+        double gaussArg = FastMath.exp(-FastMath.pow(arg, 2));
         double ret = Math.exp(gaussArg);
         return Nd4j.createDouble(ret, 0);
     }

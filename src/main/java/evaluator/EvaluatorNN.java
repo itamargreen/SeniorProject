@@ -1,7 +1,7 @@
 package evaluator;
 
-import GameObjects.BoardWinPair;
-import GameObjects.State;
+import gameObjects.BoardWinPair;
+import gameObjects.State;
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
@@ -11,6 +11,7 @@ import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.deeplearning4j.ui.stats.StatsListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -21,28 +22,21 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by itamar on 24-Apr-17.
  */
 public class EvaluatorNN {
-    public static final int seed = 12345;
-    //Number of iterations per minibatch
-    public static final int iterations = 30;
-    //Number of epochs (full passes of the data)
-    public static final int nEpochs = 200;
-    //Number of data points
-    public static final int nSamples = 1000;
-    //Batch size: i.e., each epoch has nSamples/batchSize parameter updates
-    public static final int batchSize = 1;
-    //Network learning rate
-    public static final double learningRate = 0.01;
-    public static final Random rng = new Random(seed);
+    private static final int seed = 12345;
+    private static final int iterations = 1;
+    private static final double learningRate = 0.75;
     private static MultiLayerNetwork net = null;
-    private static boolean flag = false;
-    private static List<BoardWinPair> records = new ArrayList<>();
-    private static File recordFile = recordFile = new File(System.getenv("AppData") + "\\SeniorProjectDir\\records.txt");
+    private static List<BoardWinPair> recordsWinPairs = new ArrayList<>();
+    private static File recordFile = new File(System.getenv("AppData") + "\\SeniorProjectDir\\recordsWinPairs.txt");
     private static StatsStorage storage;
 
     public static MultiLayerNetwork getNet() {
@@ -69,12 +63,12 @@ public class EvaluatorNN {
 
     public static void train(File model, int totalSize) {
 
-        double[][] inputData = new double[records.size()][totalSize];
-        double[][] outputData = new double[records.size()][1];
+        double[][] inputData = new double[recordsWinPairs.size()][totalSize];
+        double[][] outputData = new double[recordsWinPairs.size()][1];
 
         for (int i = 0; i < inputData.length; i++) {
-            inputData[i] = records.get(i).getBoard();
-            outputData[i] = new double[]{records.get(i).getOutcome()};
+            inputData[i] = recordsWinPairs.get(i).getBoard();
+            outputData[i] = new double[]{recordsWinPairs.get(i).getOutcome()};
         }
 
 
@@ -84,16 +78,20 @@ public class EvaluatorNN {
         List<DataSet> list = dataSet.asList();
         Collections.shuffle(list);
         Collections.shuffle(list);
-        Collections.shuffle(list);
-        DataSetIterator iterator = new ListDataSetIterator(list, records.size());
+        DataSetIterator iterator = new ListDataSetIterator(list, list.size());
         System.out.println("start training #2");
-        int epoch = 1;
+        int epoch = 0;
+        double score = -1;
         do {
 
-            iterator = new ListDataSetIterator(list, epoch);
+            iterator.reset();
             net.fit(iterator);
-            epoch++;
-        } while (epoch < list.size()+1);
+            if (net.score() == score) {
+                break;
+            }
+            score = net.score();
+
+        } while (net.score() < 0.85);
         INDArray testIn = list.get(list.size() - 1).getFeatures();
         INDArray outputT = net.output(testIn);
         if (outputT.isScalar()) {
@@ -110,7 +108,7 @@ public class EvaluatorNN {
     }
 
     public static void addPair(BoardWinPair... pairs) {
-        EvaluatorNN.records.addAll(Arrays.asList(pairs));
+        EvaluatorNN.recordsWinPairs.addAll(Arrays.asList(pairs));
     }
 
     public static void firstNeuralTest(List<BoardWinPair> records, int totalSize, File model) {
@@ -122,56 +120,63 @@ public class EvaluatorNN {
                     .seed(seed)
                     .iterations(iterations)
                     .optimizationAlgo(OptimizationAlgorithm.LBFGS)
-                    .learningRate(learningRate)
-                    .weightInit(WeightInit.XAVIER)
-
+                    .weightInit(WeightInit.XAVIER_LEGACY)
+                    //.updater(Updater.ADAGRAD)
                     .list()
                     .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-                            .activation(Activation.CUBE)
+                            .activation(Activation.LEAKYRELU).learningRate(0.05)
                             .build())
-                    .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden/2)
-                            .activation(Activation.RELU)
+                    .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3)
+                            .activation(Activation.RELU).learningRate(0.05)
                             .build())
-                    .layer(2, new DenseLayer.Builder().nIn(nHidden / 2).nOut((nHidden / 3) * 2)
-                            .activation(Activation.TANH)
+                    .layer(2, new DenseLayer.Builder().nIn(nHidden / 3).nOut(nHidden / 6)
+                            .activation(Activation.ELU).learningRate(0.05)
                             .build())
-
-                    .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                    .layer(3, new DenseLayer.Builder().nIn(nHidden / 6).nOut(nHidden / 14)
+                            .activation(Activation.RRELU).learningRate(0.05)
+                            .build())
+                    .layer(4, new OutputLayer.Builder(LossFunctions.LossFunction.SQUARED_HINGE)
                             .activation(Activation.IDENTITY)
-                            .nIn((nHidden / 3) * 2).nOut(numOutputs).build())
+                            .nIn(nHidden / 14).nOut(numOutputs).build())
                     .pretrain(false).backprop(true).build()
             );
 
             net.init();
-            net.setListeners(new ScoreIterationListener(1));
+
+            net.setListeners(new ScoreIterationListener(1), new StatsListener(storage));
         }
+        if (records.size() != 0) {
+            double[][] inputData = new double[records.size()][totalSize];
+            double[][] outputData = new double[records.size()][1];
 
-        double[][] inputData = new double[records.size()][totalSize];
-        double[][] outputData = new double[records.size()][1];
+            for (int i = 0; i < inputData.length; i++) {
+                inputData[i] = records.get(i).getBoard();
+                outputData[i] = new double[]{records.get(i).getOutcome()};
+            }
 
-        for (int i = 0; i < inputData.length; i++) {
-            inputData[i] = records.get(i).getBoard();
-            outputData[i] = new double[]{records.get(i).getOutcome()};
+
+            INDArray input = Nd4j.create(inputData);
+            INDArray output = Nd4j.create(outputData);
+            DataSet dataSet = new DataSet(input, output);
+            List<DataSet> list = dataSet.asList();
+            Collections.shuffle(list);
+            Collections.shuffle(list);
+            Collections.shuffle(list);
+            DataSetIterator iterator = new ListDataSetIterator(list, records.size());
+
+            net.setListeners(new ScoreIterationListener(1), new StatsListener(storage));
+
+            System.out.println("start training");
+            int epoch = 1;
+            do {
+
+                iterator.reset();
+                net.fit(iterator);
+                //++epoch < 750
+            } while (++epoch < 1000);
+            System.out.println("finished training");
+
         }
-
-
-        INDArray input = Nd4j.create(inputData);
-        INDArray output = Nd4j.create(outputData);
-        DataSet dataSet = new DataSet(input, output);
-        List<DataSet> list = dataSet.asList();
-        Collections.shuffle(list);
-        Collections.shuffle(list);
-        Collections.shuffle(list);
-        DataSetIterator iterator = new ListDataSetIterator(list, records.size());
-        System.out.println("start training");
-        int epoch = 1;
-        do {
-
-            iterator = new ListDataSetIterator(list, epoch);
-            net.fit(iterator);
-            epoch++;
-        } while (epoch < list.size()+1);
-
 
         try {
             ModelSerializer.writeModel(net, model, true);
@@ -179,12 +184,12 @@ public class EvaluatorNN {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        EvaluatorNN.records.addAll(records);
+        EvaluatorNN.recordsWinPairs.addAll(records);
 
     }
 
     public static List<BoardWinPair> getRecords() {
-        return records;
+        return recordsWinPairs;
     }
 
     public static double[] bestColumnFromHere(State game) {
@@ -203,7 +208,7 @@ public class EvaluatorNN {
             INDArray input = Nd4j.create(boardArray);
             INDArray output = net.output(input, false);
             if (output.isScalar()) {
-                double evaluated = output.meanNumber().doubleValue();
+                double evaluated = output.getDouble(0);
                 if (evaluated > max) {
                     Arrays.fill(bestColumn, 0);
                     bestColumn[column] = 1;
@@ -211,23 +216,8 @@ public class EvaluatorNN {
                 }
             }
         }
+
         return bestColumn;
     }
 
-    public static double testNetwork(BoardWinPair pair) {
-        if (net == null) {
-            return 0.0;
-        }
-        double[][] inputData = new double[1][pair.getBoard().length];
-        double[][] outputData = new double[1][1];
-        inputData[0] = pair.getBoard();
-        outputData[0] = new double[]{pair.getOutcome()};
-        INDArray input = Nd4j.create(inputData);
-
-        INDArray output = net.output(input, false);
-        //TODO: fix this
-        //FIXME: please
-        return 0.0;
-
-    }
 }

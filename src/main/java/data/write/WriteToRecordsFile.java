@@ -1,7 +1,7 @@
 package data.write;
 
-import GameObjects.BoardColumnPair;
-import GameObjects.BoardWinPair;
+import gameObjects.BoardColumnPair;
+import gameObjects.BoardWinPair;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -30,7 +30,7 @@ public class WriteToRecordsFile {
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(recordFile));
 
-String line = "";
+            String line = "";
             for (BoardWinPair pair : records) {
                 double[] input = pair.getBoard();
                 double out = pair.getOutcome();
@@ -42,7 +42,7 @@ String line = "";
                 bw.append(line);
                 bw.newLine();
             }
-            presentSave(line);
+            //presentSave(line);
             bw.flush();
             bw.close();
 
@@ -54,10 +54,10 @@ String line = "";
 
     private static void presentSave(String text) {
         String line = text.split(":")[0];
-        String[]values = line.split(",");
+        String[] values = line.split(",");
         for (int i = 0; i < values.length; i++) {
-            System.out.print(values[i]+",");
-            if(i%6==0 && i>0){
+            System.out.print(values[i] + ",");
+            if (i % 6 == 0 && i > 0) {
                 System.out.println();
             }
 

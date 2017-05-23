@@ -1,20 +1,22 @@
 package moveMaker;
 
-import GameObjects.BoardColumnPair;
-import GameObjects.State;
+import gameObjects.BoardColumnPair;
+import gameObjects.State;
+import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.earlystopping.saver.LocalFileModelSaver;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.deeplearning4j.ui.stats.StatsListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
-import org.nd4j.linalg.activations.IActivation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
@@ -32,19 +34,15 @@ import java.util.List;
  * <p>
  * Created by Itamar.
  */
-public class ColumnChooser {
+class ColumnChooser {
     private final int seed = 12345;
-    private final int iterations = 30;
-    private final double learningRate = 0.01;
     private MultiLayerNetwork net = null;
     private List<BoardColumnPair> boardColumnPairs;
-    private MultiLayerConfiguration configuration;
-    private LocalFileModelSaver saver;
     private File saveFile;
-    private File saveFile2;
     private int height;
     private int width;
     private INDArray labels;
+    private StatsStorage storage;
 
     /**
      * Constructor for the chooser.
@@ -55,13 +53,14 @@ public class ColumnChooser {
      * @param saved            Save file (.bin) of the model.
      *                         //TODO: do something about the saved parameter
      */
-    public ColumnChooser(List<BoardColumnPair> boardColumnPairs, int height, int width, File saved) {
-        this.saveFile2 = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
+    public ColumnChooser(List<BoardColumnPair> boardColumnPairs, int height, int width, File saved, StatsStorage storage) {
+        File saveFile2 = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
         this.width = width;
         this.height = height;
         this.boardColumnPairs = boardColumnPairs;
         this.saveFile = saved;
-        saver = new LocalFileModelSaver(saveFile2.getPath());
+        this.storage = storage;
+        LocalFileModelSaver saver = new LocalFileModelSaver(saveFile2.getPath());
         createColumnChooser();
 
 
@@ -88,63 +87,52 @@ public class ColumnChooser {
         int nHidden = totalSize / 2;
         int numOutputs = width;
 
-//        if (saveFile2.exists()) {
-//            try {
-//                net = ModelSerializer.restoreMultiLayerNetwork(saveFile2);
-//                configuration = net.getLayerWiseConfigurations();
-//
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        } else {
 
-        configuration = new NeuralNetConfiguration.Builder()
+        double learningRate = 0.003;
+        MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
                 .seed(1562)
-                .iterations(iterations)
-                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .learningRate(learningRate)
-                .weightInit(WeightInit.XAVIER)
-
+                .iterations(1)
+                .optimizationAlgo(OptimizationAlgorithm.LBFGS)
+                .weightInit(WeightInit.XAVIER_LEGACY)
+                .updater(Updater.ADAGRAD)
                 .list()
                 .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-                        .activation(Activation.RELU)
+                        .activation(Activation.LEAKYRELU).learningRate(0.005)
                         .build())
-                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden/3)
-                        .activation(Activation.ELU)
+                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3 * 2)
+                        .activation(Activation.RELU).learningRate(0.5)
                         .build())
-
-
-
-                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                .layer(2, new DenseLayer.Builder().nIn(nHidden / 3 * 2).nOut(nHidden / 3)
+                        .activation(Activation.ELU).learningRate(0.05)
+                        .build())
+                .layer(3, new DenseLayer.Builder().nIn(nHidden / 3).nOut(nHidden / 6)
+                        .activation(Activation.RRELU).learningRate(0.005)
+                        .build())
+                .layer(4, new OutputLayer.Builder(LossFunctions.LossFunction.SQUARED_HINGE)
                         .activation(Activation.IDENTITY)
-                        .nIn((nHidden)/ 3).nOut(numOutputs).build())
+                        .nIn(nHidden / 6).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
 //        }
         double[][] labelArray = new double[width][width];
         for (int i = 0; i < labelArray.length; i++) {
-            labelArray[i][i] = (double)1;
+            labelArray[i][i] = (double) 1;
 
         }
         this.labels = Nd4j.create(labelArray);
         net = new MultiLayerNetwork(configuration);
         net.init();
-        //File bestModel = new File(System.getenv("AppData") + "\\SeniorProjectDir\\bestModel.bin");
+        net.setListeners(new ScoreIterationListener(1), new StatsListener(storage));
+        net.setLabels(labels);
         if (saveFile.exists()) {
             try {
-                //System.out.println("loaded best model 1");
-                /**net = **/ModelSerializer.restoreMultiLayerNetwork(saveFile);
+
+                ModelSerializer.restoreMultiLayerNetwork(saveFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-//        } else if (bestModel.exists()) {
-//            try {
-//                System.out.println("loaded best model 2");
-//                net = saver.getBestModel();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
+
+
     }
 
     /**
@@ -158,7 +146,7 @@ public class ColumnChooser {
         double[][] outputArray = new double[boardColumnPairs.size()][width];
         for (int i = 0; i < inputArray.length; i++) {
             inputArray[i] = boardColumnPairs.get(i).getBoard();
-            outputArray[i] = boardColumnPairs.get(i).getColumns();
+            outputArray[i] = boardColumnPairs.get(i).getColumn();
         }
 
         INDArray input = Nd4j.create(inputArray);
@@ -166,37 +154,17 @@ public class ColumnChooser {
 
         DataSet dataSet = new DataSet(input, output);
         List<DataSet> list = dataSet.asList();
-        List<DataSet> trainData = list.subList(0, (list.size() / 3) * 2);
-        List<DataSet> testData = list.subList((list.size() / 3) * 2, list.size());
-        DataSetIterator iterator = new ListDataSetIterator(list, list.size());
-//        DataSetIterator myTrainData = new ListDataSetIterator(trainData, trainData.size());
-//        DataSetIterator myTestData = new ListDataSetIterator(testData, testData.size());
-//
-//
-//        EarlyStoppingConfiguration esConf = new EarlyStoppingConfiguration.Builder()
-//                .epochTerminationConditions(new MaxEpochsTerminationCondition(30))
-//                .iterationTerminationConditions(new MaxTimeIterationTerminationCondition(20, TimeUnit.MINUTES))
-//                .scoreCalculator(new DataSetLossCalculator(myTestData, true))
-//                .evaluateEveryNEpochs(2)
-//                .modelSaver(saver)
-//                .build();
-//
-//
-//        EarlyStoppingTrainer trainer = new EarlyStoppingTrainer(esConf, configuration, myTrainData);
-//        System.out.println("started early training");
-//        EarlyStoppingResult result = trainer.fit();
-//        net = (MultiLayerNetwork) result.getBestModel();
-//        System.out.println("finished early training");
 
-        int epoch = 0;
+        DataSetIterator iterator = new ListDataSetIterator(list, list.size());
+
+        int epoch = 1;
         do {
             iterator.reset();
             net.fit(iterator);
-            epoch++;
-        } while (epoch < 15);
+            //net.score() < 0.65 &&
+        } while (++epoch < 500);
         System.out.println("finished training");
-        net.setListeners(new ScoreIterationListener(1));
-        net.setLabels(labels);
+
         System.out.println("writing to file in chooser");
         try {
             ModelSerializer.writeModel(net, saveFile, true);
@@ -228,24 +196,20 @@ public class ColumnChooser {
             if (output.isRowVector()) {
                 double[] res = new double[width];
                 for (int i = 0; i < res.length; i++) {
-                    res[i] = output.getDouble(0,i);
+                    res[i] = output.getDouble(0, i);
 
                 }
                 return res;
             } else {
                 return new double[]{-1.0};
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return new double[]{-1.0};
 
     }
 
-    public void doTraining(BoardColumnPair pair) {
-        boardColumnPairs.add(pair);
-        trainNN();
-    }
 
     /**
      * Trains the neural network on all the records that it already has <b>AND</b> on the {@link List list} passed as a parameter.
