@@ -1,21 +1,22 @@
 package manualGame;
 
-import GameObjects.BoardColumnPair;
-import GameObjects.BoardWinPair;
-import GameObjects.CellState;
-import GameObjects.State;
 import bruteForceCalculation.WinAssessment;
-import com.diffplug.common.base.TreeNode;
 import data.write.WriteToRecordsFile;
 import evaluator.EvaluatorNN;
+import gameObjects.BoardColumnPair;
+import gameObjects.BoardWinPair;
+import gameObjects.CellState;
+import gameObjects.State;
 import moveMaker.BoardNetworkCoordinator;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
@@ -26,22 +27,21 @@ import java.util.Stack;
  * Created by Itamar.
  */
 public class Board extends JFrame implements MouseListener, WindowListener {
-    public static Stack<Integer>[] boardStacks;
-    protected static int playerTurn = 1;
+    private static Stack<Integer>[] boardStacks;
+    private static int playerTurn = 1;
     private static String env;
-    final JCheckBox autoCreateDataSet = new JCheckBox("Create Dataset");
-    private BoardNetworkCoordinator networkCoordinator;
+    private static int moveCounter = 0;
+    private final JCheckBox autoCreateDataSet = new JCheckBox("Create Dataset");
+    private final BoardNetworkCoordinator networkCoordinator;
+    private final myPanel panel;
+    private final State gameState;
+    private final JFrame frame = new JFrame();
+    private final JLabel whenAddingRecord = new JLabel("waiting...");
     private File dataFileDir;
     private File recordFile;
-    private File model;
-    private List<BoardWinPair> record = new ArrayList<BoardWinPair>();
-    private myPanel panel;
+    private File evaluatorModel;
+    private List<BoardWinPair> record = new ArrayList<>();
     private int boardWidth, boardHeight;
-    private State gameState;
-    private JFrame frame = new JFrame();
-    private JLabel whenAddingRecord = new JLabel("waiting...");
-    private JLabel player = new JLabel("currently: ");
-
 
     /**
      * Game gui class constructor. Handles all the control buttons and gui liveliness.
@@ -53,12 +53,12 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      * @param env                Game data folder path
      * @param dataFileDir        Game data file
      * @param recordFile         Training data for evaluator nn
-     * @param model              Evaluator nn save model
+     * @param evaluatorModel     Evaluator nn save evaluatorModel
      * @param record             Evaluator nn training data in List data structure
      * @param networkCoordinator Coordinator between the game and the column chooser NN
      */
-    public Board(int boardWidth, int boardHeight, String env, File dataFileDir, File recordFile, File model, List<BoardWinPair> record, BoardNetworkCoordinator networkCoordinator) {
-        this.model = model;
+    public Board(int boardWidth, int boardHeight, String env, File dataFileDir, File recordFile, File evaluatorModel, List<BoardWinPair> record, BoardNetworkCoordinator networkCoordinator) {
+        this.evaluatorModel = evaluatorModel;
 
         this.dataFileDir = dataFileDir;
         this.recordFile = recordFile;
@@ -69,7 +69,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         gameState = new State(boardWidth, boardHeight);
         boardStacks = new Stack[boardWidth];
         for (int i = 0; i < boardWidth; i++) {
-            boardStacks[i] = new Stack<Integer>();
+            boardStacks[i] = new Stack<>();
             boardStacks[i].setSize(boardHeight);
         }
         setSize(boardWidth * 50 + 100, boardHeight * 50 + 100);
@@ -85,18 +85,16 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         setLocationRelativeTo(null);
         setVisible(true);
         addMouseListener(this);
-        Thread gameThread = new Thread(new Runnable() {
-            public void run() {
-                while (true) {
-                    panel.setState(gameState);
+        Thread gameThread = new Thread(() -> {
+            while (true) {
+                panel.setState(gameState);
 
-                    repaint();
-                    panel.repaint();
-                    try {
-                        Thread.sleep(30);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                repaint();
+                panel.repaint();
+                try {
+                    Thread.sleep(30);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -112,85 +110,58 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
 
         JButton useRecords = new JButton("Use Records");
-        useRecords.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                EvaluatorNN.firstNeuralTest(getRecord(), boardWidth * boardHeight, model);
-            }
-        });
+        useRecords.addActionListener(e -> EvaluatorNN.firstNeuralTest(getRecord(), boardWidth * boardHeight, evaluatorModel));
         container.add(useRecords);
 
-        JButton createTrainingSetForChooser = new JButton("Create chooser trainig set");
-        createTrainingSetForChooser.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                createChooserTrainSet(gameState);
-            }
-        });
+        JButton createTrainingSetForChooser = new JButton("Create chooser training set");
+        createTrainingSetForChooser.addActionListener(e -> createChooserTrainSet(gameState));
         container.add(createTrainingSetForChooser);
 
         JButton loadNet = new JButton("Load NN");
-        loadNet.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (model.exists())
-                    EvaluatorNN.loadNN(model);
-            }
+        loadNet.addActionListener(e -> {
+            if (evaluatorModel.exists())
+                EvaluatorNN.loadNN(evaluatorModel);
         });
         container.add(loadNet);
 
         JButton discardList = new JButton("new data");
-        discardList.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setRecord(new ArrayList<BoardWinPair>());
+        discardList.addActionListener(e -> {
+            setRecord(new ArrayList<BoardWinPair>());
 
-                whenAddingRecord.setText("now has " + record.size() + " records");
-            }
+            whenAddingRecord.setText("now has " + record.size() + " records");
         });
         container.add(discardList);
 
 
         JButton calculate = new JButton("Foresee");
-        calculate.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (gameState.checkWin().equals(CellState.EMPTY)) {
-                    double[] input = gameState.convertToArray();
-                    double out = doThing();
-                    BoardWinPair pair = new BoardWinPair(input, out);
-                    if (eval.isSelected()) {
-                        EvaluatorNN.testNetwork(pair);
-                    }
+        calculate.addActionListener(e -> {
+            if (gameState.checkWin().equals(CellState.EMPTY)) {
+                double[] input = gameState.convertToArray();
+                double out = doThing();
+                BoardWinPair pair = new BoardWinPair(input, out);
 
 
-                    record.add(pair);
-                    whenAddingRecord.setText("now has " + record.size() + " records");
-                }
-
-
+                record.add(pair);
+                whenAddingRecord.setText("now has " + record.size() + " records");
             }
+
+
         });
 
         JButton writeToFile = new JButton("Write to file");
-        writeToFile.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                WriteToRecordsFile.writeRecords(record, recordFile);
-                JOptionPane.showMessageDialog(null, "Done");
-            }
+        writeToFile.addActionListener(e -> {
+            WriteToRecordsFile.writeRecords(record, recordFile);
+            JOptionPane.showMessageDialog(null, "Done");
         });
 
         JButton loadLatest = new JButton("load latest");
-        loadLatest.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                List<BoardWinPair> forLatest = record;
-                gameState.fromArray(forLatest.get(forLatest.size() - 1).getBoard());
-                panel.setState(gameState);
-                repaint();
-                JOptionPane.showMessageDialog(null, "loaded latest game");
+        loadLatest.addActionListener(e -> {
+            List<BoardWinPair> forLatest = record;
+            gameState.fromArray(forLatest.get(forLatest.size() - 1).getBoard());
+            panel.setState(gameState);
+            repaint();
+            JOptionPane.showMessageDialog(null, "loaded latest game");
 
-            }
         });
 
 
@@ -198,6 +169,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         container.add(eval);
         container.add(autoCreateDataSet);
         container.add(whenAddingRecord);
+        JLabel player = new JLabel("currently: ");
         container.add(player);
         container.add(writeToFile);
         container.add(loadLatest);
@@ -269,19 +241,19 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         this.recordFile = recordFile;
     }
 
-    public File getModel() {
-        return model;
+    public File getEvaluatorModel() {
+        return evaluatorModel;
     }
 
-    public void setModel(File model) {
-        this.model = model;
+    public void setEvaluatorModel(File evaluatorModel) {
+        this.evaluatorModel = evaluatorModel;
     }
 
-    public List<BoardWinPair> getRecord() {
+    private List<BoardWinPair> getRecord() {
         return record;
     }
 
-    public void setRecord(List<BoardWinPair> record) {
+    private void setRecord(List<BoardWinPair> record) {
         this.record = record;
     }
 
@@ -306,10 +278,10 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      *
      * @return Returns the evaluator output as a double.
      */
-    public double doThing() {
+    private double doThing() {
         CellState tes = gameState.checkWin();
         System.out.println(tes);
-        TreeNode<State> future = WinAssessment.assessWin(gameState, -1);
+        WinAssessment.assessWin(gameState, -1);
         return WinAssessment.diff;
     }
 
@@ -319,30 +291,40 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         BoardWinPair pair = new BoardWinPair(input, out);
         this.record.add(pair);
         whenAddingRecord.setText("now has " + record.size() + " records");
+        WriteToRecordsFile.writeRecords(this.record, this.recordFile);
         EvaluatorNN.addPair(pair);
-        EvaluatorNN.train(model, gameState.getWidth() * gameState.getHeight());
+        EvaluatorNN.train(evaluatorModel, gameState.getWidth() * gameState.getHeight());
     }
-
 
     /**
      * This calls the coordinator for the chooser neural network, and applies the chooser's output as the computer made move.
-     *
-     * @param game The state of the game after the human
      */
-    private void moveMade(State game) {
-        System.out.println("entered move maker method in board");
-        //networkCoordinator.trainChooser();
-        //System.out.println("trained chooser from board");
-        int result = networkCoordinator.getNNAction(game);
-        if (result < 7 && result > -1) {
-
-            gameState.makeMove(playerTurn, result);
-
-            panel.setState(gameState);
-            repaint();
-            playerTurn = -playerTurn;
+    private void moveMade() {
+        if (moveCounter > 30) {
+            int choice = (int) (Math.random() * 7);
+            while (!(gameState.makeMove(playerTurn, choice))) {
+                choice = (int) (Math.random() * 7);
+            }
+            gameState.makeMove(playerTurn, choice);
         } else {
-            System.err.println("Problem!!");
+            System.out.println("entered move maker method in board");
+            int result = networkCoordinator.getNNAction(gameState);
+            if (result < 7 && result > -1) {
+
+                if (gameState.makeMove(playerTurn, result)) {
+                    moveCounter = 0;
+                    panel.setState(gameState);
+                    repaint();
+                    playerTurn = -playerTurn;
+                } else {
+                    moveCounter++;
+                    moveMade();
+                }
+
+
+            } else {
+                System.err.println("Problem!!");
+            }
         }
     }
 
@@ -352,15 +334,9 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      * @param game The state of the game from which to create the training set.
      */
     private void createChooserTrainSet(State game) {
-        State copy = new State(game);
-        BoardColumnPair[] boardColumnPairs = new BoardColumnPair[boardWidth + 1];
-        boardColumnPairs[0] = new BoardColumnPair(copy.convertToArray(), EvaluatorNN.bestColumnFromHere(copy));
-        for (int i = 1; i < boardColumnPairs.length; i++) {
-            copy = new State(game);
-            copy.makeMove(-1, i - 1);
-            boardColumnPairs[i] = new BoardColumnPair(copy.convertToArray(), EvaluatorNN.bestColumnFromHere(copy));
 
-        }
+        BoardColumnPair boardColumnPairs = new BoardColumnPair(game.convertToArray(), EvaluatorNN.bestColumnFromHere(game));
+
         networkCoordinator.addPair(boardColumnPairs);
     }
 
@@ -372,15 +348,14 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     private void trainChooser(State game) {
         System.out.println("entered training chooser method in board");
 
-//        int column = EvaluatorNN.bestColumnFromHere(game);
-//        BoardColumnPair pair = new BoardColumnPair(game.convertToArray(), column);
+        double[] column = EvaluatorNN.bestColumnFromHere(game);
+        BoardColumnPair pair = new BoardColumnPair(game.convertToArray(), column);
 
         if (networkCoordinator.isChooserNull()) {
             System.err.println("chooser was null!");
-            //networkCoordinator.addPair(pair);
             networkCoordinator.createChooser(boardHeight, boardWidth);
         }
-//        this.networkCoordinator.trainChooser(pair);
+        this.networkCoordinator.trainChooser(pair);
 
 
     }
@@ -418,9 +393,6 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      */
     public void mouseReleased(MouseEvent e) {
         Point location = e.getPoint();
-        int unitW = getWidth() / boardWidth;
-        int col = (int) (location.getX() / unitW + 30 * 1.5);
-        int row = (int) (location.getY() / boardHeight + 30 * 1.5);
 
 
         for (int i = 0; i < boardWidth; i++) {
@@ -433,13 +405,14 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
                 repaint();
                 if (autoCreateDataSet.isSelected()) {
+                    trainEvaluator(gameState);
                     createChooserTrainSet(gameState);
+                    networkCoordinator.trainChooser();
 
-              
                 }
                 if (playerTurn == -1) {
                     System.out.println("Computer making move");
-                    //  moveMade(gameState);
+                    moveMade();
                 }
 
                 break;
@@ -488,8 +461,9 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
 
     class myPanel extends JPanel {
-        protected int size = 30;
-        private int w, h;
+        final int size = 30;
+        private final int w;
+        private final int h;
         private State state;
 
         public myPanel(int w, int h) {

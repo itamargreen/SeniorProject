@@ -1,17 +1,16 @@
-import GameObjects.BoardWinPair;
-import manualGame.Board;
-import moveMaker.BoardNetworkCoordinator;
 import data.restore.RestoreRecordFile;
 import evaluator.EvaluatorNN;
+import gameObjects.BoardWinPair;
+import manualGame.Board;
+import moveMaker.BoardNetworkCoordinator;
 import org.deeplearning4j.api.storage.StatsStorage;
-import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.ui.api.UIServer;
-import org.deeplearning4j.ui.stats.StatsListener;
 import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,16 +18,13 @@ import java.util.List;
  * <p>
  * Created by User on 29-Apr-17.
  */
+
 public class ConnectingFourNNs {
 
-    public static File dataFileDir;
-    public static File recordFile;
-    public static File recordColumnFile;
-    private static String env;
-    private static File model;
-    private static File chooser;
-    private static List<BoardWinPair> record = new ArrayList<BoardWinPair>();
-    private static BoardNetworkCoordinator networkCoordinator;
+    public static Logger logger = LoggerFactory.getLogger(ConnectingFourNNs.class);
+    private static File dataFileDir;
+    private static File recordsWinPairs;
+    private static File recordColumnFile;
 
     /**
      * This creates the folders and files needed to run the program.
@@ -38,7 +34,9 @@ public class ConnectingFourNNs {
      */
     public static void main(String[] args) {
 
-        env = System.getenv("AppData") + "\\SeniorProjectDir\\";
+        logger.info("Test");
+
+        String env = System.getenv("AppData") + "\\SeniorProjectDir\\";
 
         dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
         if (!dataFileDir.exists()) {
@@ -48,10 +46,10 @@ public class ConnectingFourNNs {
             dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
             dataFileDir.mkdir();
         }
-        recordFile = new File(env + "\\records.txt");
-        if (!recordFile.exists()) {
+        recordsWinPairs = new File(env + "\\recordsWinPairs.txt");
+        if (!recordsWinPairs.exists()) {
             try {
-                recordFile.createNewFile();
+                recordsWinPairs.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -66,16 +64,17 @@ public class ConnectingFourNNs {
         }
         UIServer uiServer = UIServer.getInstance();
         StatsStorage statsStorage = new InMemoryStatsStorage();
-//        model.setListeners(new StatsListener(),new ScoreIterationListener(1));
         uiServer.attach(statsStorage);
-        model = new File(env + "\\model.zip");
-        chooser = new File(env + "\\chooser.zip");
+        File model = new File(env + "\\EvaluatorModel.zip");
+        File chooser = new File(env + "\\ChooserModel.zip");
+        List<BoardWinPair> record = RestoreRecordFile.readRecords(recordsWinPairs);
         EvaluatorNN.setStats(statsStorage);
         EvaluatorNN.loadNN(model);
-        record = RestoreRecordFile.readRecords(recordFile);
-        networkCoordinator = new BoardNetworkCoordinator(chooser, recordColumnFile);
+
+        BoardNetworkCoordinator networkCoordinator = new BoardNetworkCoordinator(chooser, recordColumnFile);
+        networkCoordinator.setStorage(statsStorage);
         networkCoordinator.createChooser(6, 7);
-        Board b = new Board(7, 6, env, dataFileDir, recordFile, model, record, networkCoordinator);
+        Board b = new Board(7, 6, env, dataFileDir, recordsWinPairs, model, record, networkCoordinator);
 
 
     }

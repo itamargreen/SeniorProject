@@ -11,7 +11,7 @@ import org.nd4j.linalg.factory.Nd4j;
 /**
  * Created by User on 05-May-17.
  */
-public class GaussianDerivative extends BaseTransformOp {
+class GaussianDerivative extends BaseTransformOp {
 
     public GaussianDerivative() {
     }
@@ -20,7 +20,7 @@ public class GaussianDerivative extends BaseTransformOp {
         super(x, z);
     }
 
-    public GaussianDerivative(INDArray x, INDArray z, long n) {
+    private GaussianDerivative(INDArray x, INDArray z, long n) {
         super(x, z, n);
     }
 
@@ -33,8 +33,8 @@ public class GaussianDerivative extends BaseTransformOp {
     }
 
     private static double gaussianDeriv(double input) {
-        double gauss = FastMath.exp(-FastMath.pow(input,2));
-        double out = -2*input*gauss;
+        double gauss = FastMath.exp(-FastMath.pow(input, 2));
+        double out = -2 * input * gauss;
         if (Nd4j.ENFORCE_NUMERICAL_STABILITY && (Double.isNaN(out) || Double.isInfinite(out))) {
             out = Nd4j.EPS_THRESHOLD;
         }
@@ -43,7 +43,7 @@ public class GaussianDerivative extends BaseTransformOp {
 
     private static IComplexNumber gaussianDeriv(IComplexNumber number) {
         double arg = number.complexArgument().doubleValue();
-        double sigArg = 1 / 1 + (FastMath.exp(-arg)) - 1 + .5f;
+        double sigArg = 1 + (FastMath.exp(-arg)) - 1 + .5f;
         double ret = Math.exp(sigArg);
         IComplexDouble sigmoid = Nd4j.createDouble(ret, 0);
         IComplexNumber oneMinus = Nd4j.createComplexNumber(1, 1).subi(sigmoid);

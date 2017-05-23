@@ -1,4 +1,4 @@
-package GameObjects;
+package gameObjects;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,7 +102,7 @@ public class State {
      * @return an array of doubles converted with the above table.
      */
     public double[] convertToArray() {
-        List<Double> temp = new ArrayList<Double>();
+        List<Double> temp = new ArrayList<>();
         double[] res = new double[width * height];
 
         for (int i = 0; i < height; i++) {
@@ -113,12 +113,15 @@ public class State {
                     case BLUE:
                         res[i * width + j] = 1.0;
                         temp.add(1.0);
+                        break;
                     case RED:
                         res[i * width + j] = -1.0;
                         temp.add(-1.0);
+                        break;
                     case EMPTY:
                         res[i * width + j] = 0.0;
                         temp.add(0.0);
+                        break;
 
                 }
 
@@ -140,7 +143,7 @@ public class State {
 
 
             int temp = (int) boardArray[i];
-            int j = i%width;
+            int j = i % width;
             switch (temp) {
                 case 1:
                     cellStates[i][j] = CellState.BLUE;
@@ -172,17 +175,9 @@ public class State {
 
         switch (player) {
             case 1:
-                if (applyMove(1, column)) {
-                    return true;
-                } else {
-                    return false;
-                }
+                return applyMove(1, column);
             case -1:
-                if (applyMove(-1, column)) {
-                    return true;
-                } else {
-                    return false;
-                }
+                return applyMove(-1, column);
         }
         return false;
     }

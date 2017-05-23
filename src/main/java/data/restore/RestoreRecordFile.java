@@ -1,9 +1,12 @@
 package data.restore;
 
-import GameObjects.BoardColumnPair;
-import GameObjects.BoardWinPair;
+import gameObjects.BoardColumnPair;
+import gameObjects.BoardWinPair;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +15,6 @@ import java.util.List;
  * <p>
  * Has a "brother" ({@link data.write.WriteToRecordsFile}) that writes to those same files.
  * Created by Itamar.
-
  */
 public class RestoreRecordFile {
 
@@ -28,7 +30,7 @@ public class RestoreRecordFile {
         try {
             BufferedReader br = new BufferedReader(new FileReader(recordFile));
             String lines = "";
-            String line = "";
+            String line;
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(":");
                 if (data.length != 2) {
@@ -56,6 +58,7 @@ public class RestoreRecordFile {
         }
         return records;
     }
+
     /**
      * Reads a list of {@link BoardColumnPair} from a file. Uses a bit of regex and a BufferedReader.
      *
@@ -68,7 +71,7 @@ public class RestoreRecordFile {
         try {
             BufferedReader br = new BufferedReader(new FileReader(recordFile));
             String lines = "";
-            String line = "";
+            String line;
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(":");
                 if (data.length != 2) {

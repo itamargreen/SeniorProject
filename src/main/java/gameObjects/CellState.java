@@ -1,4 +1,4 @@
-package GameObjects;
+package gameObjects;
 
 /**
  * Enum that makes the management of the {@link State} object <b><u>SO MUCH EASIER</u></b>
@@ -17,5 +17,5 @@ public enum CellState {
     /**
      * Red player cell
      */
-    RED;
+    RED
 }

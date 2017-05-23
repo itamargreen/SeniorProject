@@ -1,9 +1,10 @@
 package moveMaker;
 
-import GameObjects.BoardColumnPair;
-import GameObjects.State;
 import data.restore.RestoreRecordFile;
 import data.write.WriteToRecordsFile;
+import gameObjects.BoardColumnPair;
+import gameObjects.State;
+import org.deeplearning4j.api.storage.StatsStorage;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -14,14 +15,15 @@ import java.util.List;
  * Created by User on 01-May-17.
  */
 public class BoardNetworkCoordinator {
-    private File chooserFile;
+    private File chooserModel;
     private File recordsColumn;
     private ColumnChooser chooser;
     private List<BoardColumnPair> pairs;
+    private StatsStorage storage;
 
-    public BoardNetworkCoordinator(File chooserFile, File recordsColumn) {
-        this.pairs = new ArrayList<BoardColumnPair>();
-        this.chooserFile = chooserFile;
+    public BoardNetworkCoordinator(File chooserModel, File recordsColumn) {
+        this.pairs = new ArrayList<>();
+        this.chooserModel = chooserModel;
         setRecordsColumn(recordsColumn);
     }
 
@@ -29,13 +31,11 @@ public class BoardNetworkCoordinator {
         return pairs;
     }
 
-    public void setPairs(List<BoardColumnPair> pairs) {
-        this.pairs = pairs;
-    }
-
     public void addPair(BoardColumnPair... pair) {
         List<BoardColumnPair> pairList = Arrays.asList(pair);
-        this.pairs.addAll(pairList);
+        if (!pairs.containsAll(Arrays.asList(pair))) {
+            this.pairs.addAll(pairList);
+        }
         WriteToRecordsFile.writeColumnRecords(this.pairs, recordsColumn);
     }
 
@@ -53,30 +53,24 @@ public class BoardNetworkCoordinator {
         return result;
     }
 
-    public void setRecordsColumn(File recordsColumn) {
+    private void setRecordsColumn(File recordsColumn) {
         this.recordsColumn = recordsColumn;
     }
 
     /**
-     * @param records - List of data that relates board to how close a player is to winning. Can be received from evaluator nn or from brute force
-     * @param height  - board height
-     * @param width   - board width
+     * @param height - board height
+     * @param width  - board width
      */
-    public void createChooser(List<BoardColumnPair> records, int height, int width) {
-
-        if (chooserFile.exists()) {
-            this.chooser = new ColumnChooser(chooserFile);
-        } else {
-            this.chooser = new ColumnChooser(records, height, width, chooserFile);
-        }
-
-
-    }
-
     public void createChooser(int height, int width) {
         System.out.println("entered create chooser in coordinator");
         pairs = RestoreRecordFile.readColumnRecords(recordsColumn);
-        this.chooser = new ColumnChooser(this.pairs, height, width, chooserFile);
+        this.chooser = new ColumnChooser(this.pairs, height, width, chooserModel, storage);
+
+    }
+
+    public void setStorage(StatsStorage storage) {
+        this.storage = storage;
+
     }
 
     public boolean isChooserNull() {
@@ -85,16 +79,14 @@ public class BoardNetworkCoordinator {
 
     public void trainChooser() {
         System.out.println("entered general trainer in coordinator");
-        pairs = RestoreRecordFile.readColumnRecords(recordsColumn);
+
         this.chooser.doTraining(this.pairs);
     }
 
     public void trainChooser(BoardColumnPair pair) {
         System.out.println("entered single pair trainer in coordinator");
-        pairs = RestoreRecordFile.readColumnRecords(recordsColumn);
         pairs.add(pair);
-        WriteToRecordsFile.writeColumnRecords(this.pairs, recordsColumn);
-
+        trainChooser();
 
     }
 }

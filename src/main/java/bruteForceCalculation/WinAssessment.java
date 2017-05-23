@@ -1,21 +1,20 @@
 package bruteForceCalculation;
 
-import GameObjects.CellState;
-import GameObjects.State;
 import com.diffplug.common.base.TreeNode;
+import gameObjects.CellState;
+import gameObjects.State;
 
 /**
  * This class would be static, if Java was like C#. But this is Java so it has static methods and members. It creates a single training set for the Evaluator Neural network, using brute force
  *
  * @see WinAssessment#formLayer(TreeNode, int, TreeNode, int)
- *
+ * <p>
  * <p>
  * Created by itamar on 23-Mar-17.
  */
 public class WinAssessment {
     public static boolean[] fill;
     public static double diff = 0;
-private static double loseWeight = 0.05;
     private static int count = 0;
     private static double countBlue = 0;
     private static double countRed = 0;
@@ -36,7 +35,7 @@ private static double loseWeight = 0.05;
         countRed = 0;
 
 
-        TreeNode<State> futureStates = new TreeNode<State>(null, game, game.getWidth());
+        TreeNode<State> futureStates = new TreeNode<>(null, game, game.getWidth());
         formLayer(futureStates, -1, futureStates, 1);
         diff = (countRed - countBlue) / Math.max(countBlue, countRed);
         System.out.println(diff + " after " + count);
@@ -77,17 +76,18 @@ private static double loseWeight = 0.05;
                 }
                 count++;
                 if (!next.checkWin().equals(CellState.EMPTY)) {
-                    if(depth == 1){
+                    if (depth == 1) {
                         switch (next.checkWin()) {
                             case BLUE:
                                 countBlue += 3;
                             case RED:
                                 countRed += 3;
                         }
-                    }else{
+                    } else {
                         switch (next.checkWin()) {
                             case BLUE:
-                                countBlue += ((1+loseWeight) / Math.pow(depth, 1));
+                                double loseWeight = 0.05;
+                                countBlue += ((1 + loseWeight) / Math.pow(depth, 1));
                             case RED:
                                 countRed += (1 / Math.pow(depth, 1));
                         }
@@ -95,7 +95,7 @@ private static double loseWeight = 0.05;
 
 
                 }
-                TreeNode<State> nextNode = new TreeNode<State>(node, next, next.getWidth());
+                TreeNode<State> nextNode = new TreeNode<>(node, next, next.getWidth());
 
 
                 if (next.checkWin().equals(CellState.EMPTY)) {
