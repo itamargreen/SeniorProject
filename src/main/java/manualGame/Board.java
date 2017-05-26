@@ -225,53 +225,25 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         Board.env = env;
     }
 
-    public File getDataFileDir() {
-        return dataFileDir;
-    }
+//    private void moveMade() {
+//        int result = EvaluatorNN.getChoice(gameState);
+//
+//        if (result < 7 && result > -1) {
+//
+//            if (gameState.makeMove(playerTurn, result)) {
+//                panel.setState(gameState);
+//                repaint();
+//                playerTurn = -playerTurn;
+//            }
+//
+//
+//        } else {
+//            System.err.println("Problem!!");
+//        }
+//    }
 
-    public void setDataFileDir(File dataFileDir) {
-        this.dataFileDir = dataFileDir;
-    }
 
-    public File getRecordFile() {
-        return recordFile;
-    }
-
-    public void setRecordFile(File recordFile) {
-        this.recordFile = recordFile;
-    }
-
-    public File getEvaluatorModel() {
-        return evaluatorModel;
-    }
-
-    public void setEvaluatorModel(File evaluatorModel) {
-        this.evaluatorModel = evaluatorModel;
-    }
-
-    private List<BoardWinPair> getRecord() {
-        return record;
-    }
-
-    private void setRecord(List<BoardWinPair> record) {
-        this.record = record;
-    }
-
-    public int getBoardWidth() {
-        return boardWidth;
-    }
-
-    public void setBoardWidth(int boardWidth) {
-        this.boardWidth = boardWidth;
-    }
-
-    public int getBoardHeight() {
-        return boardHeight;
-    }
-
-    public void setBoardHeight(int boardHeight) {
-        this.boardHeight = boardHeight;
-    }
+//
 
     /**
      * Calculates with brute force the closeness to victory (by evaluating possibility tree)
@@ -289,9 +261,9 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         double[] input = gameState.convertToArray();
         double out = doThing();
         BoardWinPair pair = new BoardWinPair(input, out);
-        this.record.add(pair);
+        record.add(pair);
         whenAddingRecord.setText("now has " + record.size() + " records");
-        WriteToRecordsFile.writeRecords(this.record, this.recordFile);
+        WriteToRecordsFile.writeRecords(record, recordFile);
         EvaluatorNN.addPair(pair);
         EvaluatorNN.train(evaluatorModel, gameState.getWidth() * gameState.getHeight());
     }
@@ -309,6 +281,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         } else {
             System.out.println("entered move maker method in board");
             int result = networkCoordinator.getNNAction(gameState);
+
             if (result < 7 && result > -1) {
 
                 if (gameState.makeMove(playerTurn, result)) {
@@ -355,7 +328,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
             System.err.println("chooser was null!");
             networkCoordinator.createChooser(boardHeight, boardWidth);
         }
-        this.networkCoordinator.trainChooser(pair);
+        networkCoordinator.trainChooser(pair);
 
 
     }
@@ -385,7 +358,6 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     }
 
-
     /**
      * Used to respond to player actions such as making a move, and then allowing the computer to respond.
      *
@@ -407,7 +379,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
                 if (autoCreateDataSet.isSelected()) {
                     trainEvaluator(gameState);
                     createChooserTrainSet(gameState);
-                    networkCoordinator.trainChooser();
+                    //networkCoordinator.trainChooser();
 
                 }
                 if (playerTurn == -1) {
@@ -457,6 +429,54 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     public void windowDeactivated(WindowEvent e) {
 
+    }
+
+    public File getDataFileDir() {
+        return dataFileDir;
+    }
+
+    public void setDataFileDir(File dataFileDir) {
+        this.dataFileDir = dataFileDir;
+    }
+
+    public File getRecordFile() {
+        return recordFile;
+    }
+
+    public void setRecordFile(File recordFile) {
+        this.recordFile = recordFile;
+    }
+
+    public File getEvaluatorModel() {
+        return evaluatorModel;
+    }
+
+    public void setEvaluatorModel(File evaluatorModel) {
+        this.evaluatorModel = evaluatorModel;
+    }
+
+    private List<BoardWinPair> getRecord() {
+        return record;
+    }
+
+    private void setRecord(List<BoardWinPair> record) {
+        this.record = record;
+    }
+
+    public int getBoardWidth() {
+        return boardWidth;
+    }
+
+    public void setBoardWidth(int boardWidth) {
+        this.boardWidth = boardWidth;
+    }
+
+    public int getBoardHeight() {
+        return boardHeight;
+    }
+
+    public void setBoardHeight(int boardHeight) {
+        this.boardHeight = boardHeight;
     }
 
 

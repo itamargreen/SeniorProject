@@ -21,20 +21,29 @@ import java.util.List;
 
 public class ConnectingFourNNs {
 
+    /**
+     *
+     */
     public static Logger logger = LoggerFactory.getLogger(ConnectingFourNNs.class);
+    /**
+     *
+     */
     private static File dataFileDir;
+    /**
+     *
+     */
     private static File recordsWinPairs;
+    /**
+     *
+     */
     private static File recordColumnFile;
 
     /**
      * This creates the folders and files needed to run the program.
-     * //TODO: Add zip saving of training and then make this a self extracting jar or something
      *
      * @param args - Passed from cmd. Not needed.
      */
     public static void main(String[] args) {
-
-        logger.info("Test");
 
         String env = System.getenv("AppData") + "\\SeniorProjectDir\\";
 
@@ -69,7 +78,7 @@ public class ConnectingFourNNs {
         File chooser = new File(env + "\\ChooserModel.zip");
         List<BoardWinPair> record = RestoreRecordFile.readRecords(recordsWinPairs);
         EvaluatorNN.setStats(statsStorage);
-        EvaluatorNN.loadNN(model);
+        EvaluatorNN.loadNN(model, record);
 
         BoardNetworkCoordinator networkCoordinator = new BoardNetworkCoordinator(chooser, recordColumnFile);
         networkCoordinator.setStorage(statsStorage);

@@ -26,7 +26,7 @@ public class State {
     public State(int width, int height) {
         this.width = width;
         this.height = height;
-        cellStates = new CellState[this.height][this.width];
+        cellStates = new CellState[height][width];
         for (int i = 0; i < this.height; i++) {
             Arrays.fill(cellStates[i], CellState.EMPTY);
         }
