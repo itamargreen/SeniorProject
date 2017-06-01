@@ -51,14 +51,13 @@ class ColumnChooser {
      * @param height           Height of the board.
      * @param width            Width of the board.
      * @param saved            Save file (.bin) of the model.
-     *                         //TODO: do something about the saved parameter
      */
     public ColumnChooser(List<BoardColumnPair> boardColumnPairs, int height, int width, File saved, StatsStorage storage) {
         File saveFile2 = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
         this.width = width;
         this.height = height;
         this.boardColumnPairs = boardColumnPairs;
-        this.saveFile = saved;
+        saveFile = saved;
         this.storage = storage;
         LocalFileModelSaver saver = new LocalFileModelSaver(saveFile2.getPath());
         createColumnChooser();
@@ -118,7 +117,7 @@ class ColumnChooser {
             labelArray[i][i] = (double) 1;
 
         }
-        this.labels = Nd4j.create(labelArray);
+        labels = Nd4j.create(labelArray);
         net = new MultiLayerNetwork(configuration);
         net.init();
         net.setListeners(new ScoreIterationListener(1), new StatsListener(storage));
@@ -220,7 +219,7 @@ class ColumnChooser {
      * @see ColumnChooser#trainNN()
      */
     public void doTraining(List<BoardColumnPair> records) {
-        this.boardColumnPairs.addAll(records);
+        boardColumnPairs.addAll(records);
         trainNN();
     }
 }

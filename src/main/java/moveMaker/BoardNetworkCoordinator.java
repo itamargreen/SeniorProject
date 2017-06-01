@@ -22,7 +22,7 @@ public class BoardNetworkCoordinator {
     private StatsStorage storage;
 
     public BoardNetworkCoordinator(File chooserModel, File recordsColumn) {
-        this.pairs = new ArrayList<>();
+        pairs = new ArrayList<>();
         this.chooserModel = chooserModel;
         setRecordsColumn(recordsColumn);
     }
@@ -34,9 +34,9 @@ public class BoardNetworkCoordinator {
     public void addPair(BoardColumnPair... pair) {
         List<BoardColumnPair> pairList = Arrays.asList(pair);
         if (!pairs.containsAll(Arrays.asList(pair))) {
-            this.pairs.addAll(pairList);
+            pairs.addAll(pairList);
         }
-        WriteToRecordsFile.writeColumnRecords(this.pairs, recordsColumn);
+        WriteToRecordsFile.writeColumnRecords(pairs, recordsColumn);
     }
 
     public int getNNAction(State game) {
@@ -64,7 +64,7 @@ public class BoardNetworkCoordinator {
     public void createChooser(int height, int width) {
         System.out.println("entered create chooser in coordinator");
         pairs = RestoreRecordFile.readColumnRecords(recordsColumn);
-        this.chooser = new ColumnChooser(this.pairs, height, width, chooserModel, storage);
+        chooser = new ColumnChooser(pairs, height, width, chooserModel, storage);
 
     }
 
@@ -80,7 +80,7 @@ public class BoardNetworkCoordinator {
     public void trainChooser() {
         System.out.println("entered general trainer in coordinator");
 
-        this.chooser.doTraining(this.pairs);
+        chooser.doTraining(pairs);
     }
 
     public void trainChooser(BoardColumnPair pair) {

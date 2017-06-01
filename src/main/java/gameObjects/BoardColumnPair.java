@@ -23,7 +23,7 @@ public class BoardColumnPair {
     public BoardColumnPair(double[] board, double column) {
         this.board = board;
         Arrays.fill(this.column, 0);
-        this.columnSingle = column;
+        columnSingle = column;
         this.column[(int) (column)] = 1;
     }
 
@@ -39,7 +39,7 @@ public class BoardColumnPair {
         for (int i = 0; i < column.length; i++) {
             double v = column[i];
             if (v == 1.0) {
-                this.columnSingle = i;
+                columnSingle = i;
                 break;
             }
         }
