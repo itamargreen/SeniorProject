@@ -10,6 +10,7 @@ import org.nd4j.linalg.factory.Nd4j;
 /**
  * Created by User on 05-May-17.
  */
+@Deprecated
 class ActivationGauss extends BaseActivationFunction implements IActivation {
 
     @Override

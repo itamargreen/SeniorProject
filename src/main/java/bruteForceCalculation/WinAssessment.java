@@ -13,12 +13,21 @@ import gameObjects.State;
  * Created by itamar on 23-Mar-17.
  */
 public class WinAssessment {
+    @Deprecated
     public static boolean[] fill;
     public static double diff = 0;
+    /**
+     * Counter for number of moves tested.
+     */
     private static int count = 0;
+    /**
+     * Estimate of how close blue player is to winning.
+     */
     private static double countBlue = 0;
+    /**
+     * Estimate of how close red player is to winning.
+     */
     private static double countRed = 0;
-    private static int lastLine = -1;
 
     /**
      * Calls recursive method that calculates by brute force the "probability" for red player to win

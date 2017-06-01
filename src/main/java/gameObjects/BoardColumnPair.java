@@ -10,6 +10,9 @@ import java.util.Arrays;
  * @see moveMaker.ColumnChooser
  */
 public class BoardColumnPair {
+    /**
+     * An array of 1.0, 0.0 and -1.0. This represents the game board.
+     */
     private double[] board;
     private double[] column;
     private double columnSingle;
@@ -45,13 +48,21 @@ public class BoardColumnPair {
         }
     }
 
+    /**
+     * Getter for {@link BoardColumnPair#board}.
+     * @return an array of doubles that are either 1,0 or -1.
+     */
     public double[] getBoard() {
         return board;
     }
 
+    /**Setter for {@link BoardColumnPair#board} field.
+     * @param board an array containing 7x6 doubles that are 1.0,0.0,-1.0 exclusively.
+     */
     public void setBoard(double[] board) {
         this.board = board;
     }
+
 
     public double[] getColumn() {
         return column;

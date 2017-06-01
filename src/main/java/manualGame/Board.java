@@ -16,9 +16,14 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Stack;
 
 /**
  * This class is the main GUI creator and handles. The {@link myPanel myPanel} class is a JPanel that handles actually drawing the board. This class handles coordinating pieces of the program, except for the {@link moveMaker.ColumnChooser chooser}, which has its own {@link BoardNetworkCoordinator coordinator}.
@@ -27,21 +32,68 @@ import java.util.Stack;
  * Created by Itamar.
  */
 public class Board extends JFrame implements MouseListener, WindowListener {
-    private static Stack<Integer>[] boardStacks;
+
+    /**
+     * An integer that represents who's turn it is. 1 is blue, -1 is red.
+     */
     private static int playerTurn = 1;
+    /**
+     * The path to the metadata directory
+     */
     private static String env;
+    /**
+     * Counts number of moves made.
+     */
     private static int moveCounter = 0;
+    /**
+     * Checkbox in debugging and control panel for creating training data while playing.
+     */
     private final JCheckBox autoCreateDataSet = new JCheckBox("Create Dataset");
+    /**
+     * A coordinator between the Board and the {@link moveMaker.ColumnChooser} that beats the human player.
+     */
     private final BoardNetworkCoordinator networkCoordinator;
+    /**
+     * The panel on which the board is drawn.<p/>
+     * See {@link Board.myPanel} for more details.
+     */
     private final myPanel panel;
+    /**
+     * The {@link State} of the board of the game.
+     */
     private final State gameState;
+    /**
+     * The control frame.
+     */
     private final JFrame frame = new JFrame();
+    /**
+     * {@link evaluator.EvaluatorNN} training set counter.
+     */
     private final JLabel whenAddingRecord = new JLabel("waiting...");
+    /**
+     * Directory of metadata
+     */
     private File dataFileDir;
+    /**
+     * File containing training set for {@link evaluator.EvaluatorNN} neural network. The file is written by {@link WriteToRecordsFile}.
+     */
     private File recordFile;
+    /**
+     * File containing the saved neural network model for {@link evaluator.EvaluatorNN}.
+     */
     private File evaluatorModel;
+    /**
+     * A {@link List} of the training set for {@link evaluator.EvaluatorNN#net}.
+     */
     private List<BoardWinPair> record = new ArrayList<>();
-    private int boardWidth, boardHeight;
+    /**
+     * The number of columns on the board.
+     */
+    private int boardWidth;
+    /**
+     * The number of rows on the board.
+     */
+    private int boardHeight;
 
     /**
      * Game gui class constructor. Handles all the control buttons and gui liveliness.
@@ -67,18 +119,12 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         this.boardHeight = boardHeight;
 
         gameState = new State(boardWidth, boardHeight);
-        boardStacks = new Stack[boardWidth];
-        for (int i = 0; i < boardWidth; i++) {
-            boardStacks[i] = new Stack<>();
-            boardStacks[i].setSize(boardHeight);
-        }
         setSize(boardWidth * 50 + 100, boardHeight * 50 + 100);
         panel = new myPanel(boardWidth, boardHeight);
 
 
         getContentPane().add(panel, BorderLayout.CENTER);
 
-        WinAssessment.fill = new boolean[boardHeight];
 
         panel.setState(gameState);
 
@@ -126,7 +172,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
         JButton discardList = new JButton("new data");
         discardList.addActionListener(e -> {
-            setRecord(new ArrayList<BoardWinPair>());
+            setRecord(new ArrayList<>());
 
             whenAddingRecord.setText("now has " + record.size() + " records");
         });
@@ -217,13 +263,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         player.setText("Currently: " + playerTurn);
     }
 
-    public static String getEnv() {
-        return env;
-    }
 
-    public static void setEnv(String env) {
-        Board.env = env;
-    }
 
 //    private void moveMade() {
 //        int result = EvaluatorNN.getChoice(gameState);
@@ -245,9 +285,17 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
 //
 
+    public static String getEnv() {
+        return env;
+    }
+
+    public static void setEnv(String env) {
+        Board.env = env;
+    }
+
     /**
      * Calculates with brute force the closeness to victory (by evaluating possibility tree)
-     *
+     * @see WinAssessment#assessWin(State, int)
      * @return Returns the evaluator output as a double.
      */
     private double doThing() {
@@ -257,6 +305,11 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         return WinAssessment.diff;
     }
 
+    /**
+     * Trains the {@link EvaluatorNN#net} neural network on the existing training set, as well as the passed state.
+     *
+     * @param gameState the state of the game.
+     */
     private void trainEvaluator(State gameState) {
         double[] input = gameState.convertToArray();
         double out = doThing();
@@ -334,6 +387,30 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     }
 
     /**
+     * Copies the metadata from {@link Board#env} to a packable place.
+     */
+    private void copyToResources() {
+        String resourcesPath = (Board.class.getResource("/").getPath());
+        System.out.println(resourcesPath.substring(1));
+
+        Arrays.asList(dataFileDir.listFiles()).forEach(file -> {
+            if (file.isFile()) {
+                String name = file.getName();
+                if (name.endsWith(".txt") || name.endsWith(".zip") || name.endsWith(".bin")) {
+                    Path destination = Paths.get(resourcesPath.substring(1) + name);
+
+                    try {
+                        Path flag = Files.copy(file.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
+                        System.out.println(flag);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
+
+    /**
      * Overridden method for painting the components in the JFrame. Needed to ensure the control JFrame's existence
      *
      * @param g Graphics object for the JFrame.
@@ -349,11 +426,17 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void mouseClicked(MouseEvent e) {
 
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void mousePressed(MouseEvent e) {
 
     }
@@ -392,41 +475,70 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void mouseEntered(MouseEvent e) {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void mouseExited(MouseEvent e) {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void windowClosing(WindowEvent e) {
 
         if (autoCreateDataSet.isSelected())
             networkCoordinator.trainChooser();
+
+        copyToResources();
         System.exit(0);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void windowOpened(WindowEvent e) {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void windowClosed(WindowEvent e) {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void windowIconified(WindowEvent e) {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void windowDeiconified(WindowEvent e) {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void windowActivated(WindowEvent e) {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void windowDeactivated(WindowEvent e) {
 
     }
@@ -479,7 +591,6 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         this.boardHeight = boardHeight;
     }
 
-
     class myPanel extends JPanel {
         final int size = 30;
         private final int w;
@@ -492,6 +603,11 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         }
 
 
+        /**
+         * Setter for the state.
+         *
+         * @param state the state to set as {@link myPanel#gameState}.
+         */
         public void setState(State state) {
             this.state = state;
         }

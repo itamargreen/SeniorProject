@@ -11,6 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -22,19 +27,19 @@ import java.util.List;
 public class ConnectingFourNNs {
 
     /**
-     *
+     * Logger for this class
      */
     public static Logger logger = LoggerFactory.getLogger(ConnectingFourNNs.class);
     /**
-     *
+     * Metadata directory
      */
     private static File dataFileDir;
     /**
-     *
+     * Training set for {@link evaluator.EvaluatorNN} neural network. This is a .txt file
      */
     private static File recordsWinPairs;
     /**
-     *
+     * Training set for {@link moveMaker.ColumnChooser} neural network. This is a .txt file
      */
     private static File recordColumnFile;
 
@@ -44,10 +49,10 @@ public class ConnectingFourNNs {
      * @param args - Passed from cmd. Not needed.
      */
     public static void main(String[] args) {
-
+        String resourcePath = ConnectingFourNNs.class.getResource("/").getPath();
         String env = System.getenv("AppData") + "\\SeniorProjectDir\\";
-
         dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
+
         if (!dataFileDir.exists()) {
             dataFileDir.mkdir();
         } else if (!dataFileDir.isDirectory()) {//just to remove any FILES named like that
@@ -55,6 +60,21 @@ public class ConnectingFourNNs {
             dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
             dataFileDir.mkdir();
         }
+        File res = new File(resourcePath);
+        Arrays.asList(res.listFiles()).forEach(file -> {
+            if (file.isFile()) {
+                String name = file.getName();
+                if (name.endsWith(".txt") || name.endsWith(".zip") || name.endsWith(".bin")) {
+                    Path destination = Paths.get(env, name);
+                    try {
+                        Files.copy(file.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        });
         recordsWinPairs = new File(env + "\\recordsWinPairs.txt");
         if (!recordsWinPairs.exists()) {
             try {

@@ -4,6 +4,7 @@ import gameObjects.BoardWinPair;
 import gameObjects.State;
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
+import org.deeplearning4j.eval.RegressionEvaluation;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
@@ -34,7 +35,7 @@ public class EvaluatorNN {
     /**
      * The number of iterations preformed on the data
      */
-    private static final int iterations = 50;
+    private static final int iterations = 1;
     /**
      * The neural network used by this class. Initialized in {@link EvaluatorNN#loadNN(File)} or in  {@link EvaluatorNN#firstNeuralTest(List, int, File)}
      */
@@ -73,7 +74,8 @@ public class EvaluatorNN {
         try {
 
             MultiLayerNetwork restored = ModelSerializer.restoreMultiLayerNetwork(model);
-            net = restored.clone();
+            net = restored;
+            net.setListeners(new ScoreIterationListener(3), new StatsListener(storage));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -118,19 +120,14 @@ public class EvaluatorNN {
         DataSetIterator iterator = new ListDataSetIterator(list, list.size());
         System.out.println("start training #2");
         int epoch = 1;
-        double initScore = 0;
+
         do {
 
             iterator.reset();
             net.fit(iterator);
-            if (epoch == 1) {
-                initScore = net.score();
-            }
-            if (net.score() >= initScore * 1.25) {
-                break;
-            }
-        } while (++epoch < 10000);
-        System.out.println("finished training on epoch " + epoch + " and score change of " + (net.score() - initScore));
+
+        } while (++epoch < 10000 || net.score() > 15.0);
+
         INDArray testIn = list.get(list.size() - 1).getFeatures();
         INDArray outputT = net.output(testIn);
         if (outputT.isScalar()) {
@@ -179,64 +176,34 @@ public class EvaluatorNN {
      * @param model
      */
     public static void firstNeuralTest(List<BoardWinPair> records, int totalSize, File model) {
-        int nHidden = totalSize - 1;
+        int nHidden = totalSize * 3;
         int numOutputs = 1;
         if (net == null) {
             net = new MultiLayerNetwork(new NeuralNetConfiguration.Builder()
-                    .iterations(iterations)
+                    .seed(1234)
+                    .iterations(1)
                     .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                    .learningRate(0.05)
-                    .regularization(true).l2(0.25)
+                    .learningRate(1e-5)
+                    .regularization(true).l2(1e-4).dropOut(0.5)
                     .miniBatch(false)
-                    .weightInit(WeightInit.XAVIER)
+                    .weightInit(WeightInit.RELU)
                     .activation(Activation.RELU)
                     .list()
                     .layer(0, new DenseLayer.Builder().nIn(totalSize).nOut(nHidden)
                             .build())
-                    .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden - 1)
+                    .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
                             .build())
-
-                    .layer(2, new DenseLayer.Builder().nIn(nHidden - 1).nOut(nHidden - 11)
+                    .layer(2, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
                             .build())
-                    .layer(3, new DenseLayer.Builder().nIn(nHidden - 11).nOut(nHidden - 21)
-                            .build())
-                    .layer(4, new DenseLayer.Builder().nIn(nHidden - 21).nOut(nHidden - 31)
-                            .build())
-                    .layer(5, new DenseLayer.Builder().nIn(nHidden - 31).nOut(nHidden - 36)
-                            .build())
-                    .layer(6, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                            .activation(Activation.SOFTMAX)
-                            .nIn(nHidden - 36).nOut(numOutputs).build())
+                    .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                            .activation(Activation.IDENTITY)
+                            .nIn(nHidden).nOut(numOutputs).build())
                     .pretrain(false).backprop(true).build());
-
-
-//            net = new MultiLayerNetwork(
-//                    new NeuralNetConfiguration.Builder()
-//                            .miniBatch(false)
-//                            .iterations(iterations)
-//                            .activation(Activation.SIGMOID)
-//                            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-//                            .weightInit(WeightInit.XAVIER)
-//                            .regularization(true).l2(0.5)
-//                            .list()
-//                            .layer(0, new DenseLayer.Builder().nIn(totalSize).nOut(nHidden * 5)
-//                                    .learningRate(0.15)
-//                                    .build())
-//                            .layer(1, new DenseLayer.Builder().nIn(nHidden * 5).nOut(nHidden * 5)
-//                                    .learningRate(0.65)
-//                                    .build())
-//                            .layer(2, new DenseLayer.Builder().nIn(nHidden * 5).nOut(nHidden)
-//                                    .learningRate(0.65)
-//                                    .build())
-//                            .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MEAN_SQUARED_LOGARITHMIC_ERROR)
-//                                    .activation(Activation.SIGMOID)
-//                                    .nIn((nHidden)).nOut(numOutputs).build())
-//                            .pretrain(false).backprop(true).build());
 
 
             net.init();
 
-            net.setListeners(new ScoreIterationListener(5), new StatsListener(storage));
+            net.setListeners(new ScoreIterationListener(3), new StatsListener(storage));
         }
         if (records.size() != 0) {
             double[][] inputData = new double[records.size()][totalSize];
@@ -254,7 +221,7 @@ public class EvaluatorNN {
             List<DataSet> list = dataSet.asList();
 
             DataSetIterator iterator = new ListDataSetIterator(list, records.size());
-
+            RegressionEvaluation evaluation = net.evaluateRegression(iterator);
 
             System.out.println("start training");
             int epoch = 1;
@@ -263,13 +230,9 @@ public class EvaluatorNN {
 
                 iterator.reset();
                 net.fit(iterator);
-                if (epoch == 1) {
-                    initScore = net.score();
-                }
-                if (net.score() >= initScore * 70.0) {
-                    //break;
-                }
-            } while (++epoch < 10000);
+
+            } while (++epoch < 10000 || net.score() > 15.0);
+
             System.out.println("finished training on epoch " + epoch + " and score change of " + (net.score() - initScore));
 
         }

@@ -137,6 +137,11 @@ public class State {
         return res;
     }
 
+    /**
+     * Loads the state that was saved to the given array
+     *
+     * @param boardArray array size of {@link State#height}*{@link State#width} that has {@code 1.0,-1.0,0.0}
+     */
     public void fromArray(double[] boardArray) {
 
         for (int i = 0; i < height * width; i++) {
@@ -278,6 +283,11 @@ public class State {
         return CellState.EMPTY;
     }
 
+    /**
+     * Getter for {@link State#cellStates}
+     *
+     * @return a 2D array of {@link CellState} that represents the state of the board.
+     */
     public CellState[][] getCellStates() {
         return cellStates;
     }

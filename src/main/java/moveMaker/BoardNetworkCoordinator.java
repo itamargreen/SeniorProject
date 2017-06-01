@@ -4,6 +4,7 @@ import data.restore.RestoreRecordFile;
 import data.write.WriteToRecordsFile;
 import gameObjects.BoardColumnPair;
 import gameObjects.State;
+import manualGame.Board;
 import org.deeplearning4j.api.storage.StatsStorage;
 
 import java.io.File;
@@ -12,15 +13,42 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by User on 01-May-17.
+ * Coordinator between {@link manualGame.Board} and {@link ColumnChooser}.
+ * <p/>
+ * This manages getting results from the column chooser and training the chooser
+ *
+ * Created by Itamar.
  */
 public class BoardNetworkCoordinator {
+    /**
+     * File containing the model of the {@link ColumnChooser#net} neural network.
+     * <p/> This is where the model is saved to after being trained each time.
+     */
     private File chooserModel;
+    /**
+     * File containing the training set for {@link ColumnChooser#net}'s neural network.
+     * <p>
+     * <p/> This is where new training examples are saved to.
+     */
     private File recordsColumn;
+    /**
+     * The {@link ColumnChooser} that has a neural network which plays against the pplayer
+     */
     private ColumnChooser chooser;
+    /**
+     * A {@link List} of {@link BoardColumnPair} that represents the training set currently being used.
+     */
     private List<BoardColumnPair> pairs;
+    /**
+     * Not sure.
+     */
     private StatsStorage storage;
 
+    /**
+     * Constructor for the coordinator.
+     * @param chooserModel the file in which the chooser model is saved.
+     * @param recordsColumn the file in which the training set is saved.
+     */
     public BoardNetworkCoordinator(File chooserModel, File recordsColumn) {
         pairs = new ArrayList<>();
         this.chooserModel = chooserModel;
@@ -31,6 +59,13 @@ public class BoardNetworkCoordinator {
         return pairs;
     }
 
+    /**
+     * Adds the specified array of {@link BoardColumnPair} to {@link BoardNetworkCoordinator#pairs}.
+     *
+     * <p/> Also writes the new training set to {@link BoardNetworkCoordinator#recordsColumn}.
+     *
+     * @param pair A single training example for {@link ColumnChooser}.
+     */
     public void addPair(BoardColumnPair... pair) {
         List<BoardColumnPair> pairList = Arrays.asList(pair);
         if (!pairs.containsAll(Arrays.asList(pair))) {
@@ -39,6 +74,12 @@ public class BoardNetworkCoordinator {
         WriteToRecordsFile.writeColumnRecords(pairs, recordsColumn);
     }
 
+    /**
+     * This is actually the main point of the project. <p>Here the {@link ColumnChooser} is asked to make a choice. This method is called by {@link Board#moveMade()}.
+     *
+     * @param game The state of the game.
+     * @return the computer's chosen action.
+     */
     public int getNNAction(State game) {
         double[] res = chooser.chooseColumn(game);
         double max = Double.MIN_VALUE;
@@ -53,11 +94,18 @@ public class BoardNetworkCoordinator {
         return result;
     }
 
+    /**
+     * Setter for the training set save file.
+     *
+     * @param recordsColumn
+     */
     private void setRecordsColumn(File recordsColumn) {
         this.recordsColumn = recordsColumn;
     }
 
     /**
+     * Creates a {@link ColumnChooser} and passes the training set to it, for training.
+     *
      * @param height - board height
      * @param width  - board width
      */
@@ -68,21 +116,37 @@ public class BoardNetworkCoordinator {
 
     }
 
+    /**
+     * Setter for the UI storage
+     * @param storage UI storage thing.
+     */
     public void setStorage(StatsStorage storage) {
         this.storage = storage;
 
     }
 
+    /**
+     * Checks if {@link BoardNetworkCoordinator#chooser} is null.<p/> This once fixed a bug, but that bug never happens anymore, even without this method
+     * @return
+     */
     public boolean isChooserNull() {
         return (chooser == null);
     }
 
+    /**
+     * Trains the {@link BoardNetworkCoordinator#chooser} on {@link BoardNetworkCoordinator#pairs}.
+     */
     public void trainChooser() {
         System.out.println("entered general trainer in coordinator");
 
         chooser.doTraining(pairs);
     }
 
+    /**
+     * Simply adds the given {@link BoardColumnPair} to {@link BoardNetworkCoordinator#pairs} and then calls {@link BoardNetworkCoordinator#trainChooser()}
+     *
+     * @param pair a single training example for {@link ColumnChooser}.
+     */
     public void trainChooser(BoardColumnPair pair) {
         System.out.println("entered single pair trainer in coordinator");
         pairs.add(pair);
