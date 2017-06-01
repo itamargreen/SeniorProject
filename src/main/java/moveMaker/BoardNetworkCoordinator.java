@@ -14,25 +14,25 @@ import java.util.List;
 
 /**
  * Coordinator between {@link manualGame.Board} and {@link ColumnChooser}.
- * <p/>
+ * <p>
  * This manages getting results from the column chooser and training the chooser
- *
+ * <p>
  * Created by Itamar.
  */
 public class BoardNetworkCoordinator {
     /**
      * File containing the model of the {@link ColumnChooser#net} neural network.
-     * <p/> This is where the model is saved to after being trained each time.
+     * <p> This is where the model is saved to after being trained each time.</p>
      */
     private File chooserModel;
     /**
      * File containing the training set for {@link ColumnChooser#net}'s neural network.
-     * <p>
-     * <p/> This is where new training examples are saved to.
+     *
+     * <p> This is where new training examples are saved to.</p>
      */
     private File recordsColumn;
     /**
-     * The {@link ColumnChooser} that has a neural network which plays against the pplayer
+     * The {@link ColumnChooser} that has a neural network which plays against the player
      */
     private ColumnChooser chooser;
     /**
@@ -46,7 +46,8 @@ public class BoardNetworkCoordinator {
 
     /**
      * Constructor for the coordinator.
-     * @param chooserModel the file in which the chooser model is saved.
+     *
+     * @param chooserModel  the file in which the chooser model is saved.
      * @param recordsColumn the file in which the training set is saved.
      */
     public BoardNetworkCoordinator(File chooserModel, File recordsColumn) {
@@ -61,8 +62,8 @@ public class BoardNetworkCoordinator {
 
     /**
      * Adds the specified array of {@link BoardColumnPair} to {@link BoardNetworkCoordinator#pairs}.
-     *
-     * <p/> Also writes the new training set to {@link BoardNetworkCoordinator#recordsColumn}.
+     * <p>
+     * <p> Also writes the new training set to {@link BoardNetworkCoordinator#recordsColumn}.
      *
      * @param pair A single training example for {@link ColumnChooser}.
      */
@@ -97,7 +98,7 @@ public class BoardNetworkCoordinator {
     /**
      * Setter for the training set save file.
      *
-     * @param recordsColumn
+     * @param recordsColumn the file to set.
      */
     private void setRecordsColumn(File recordsColumn) {
         this.recordsColumn = recordsColumn;
@@ -118,6 +119,7 @@ public class BoardNetworkCoordinator {
 
     /**
      * Setter for the UI storage
+     *
      * @param storage UI storage thing.
      */
     public void setStorage(StatsStorage storage) {
@@ -126,8 +128,9 @@ public class BoardNetworkCoordinator {
     }
 
     /**
-     * Checks if {@link BoardNetworkCoordinator#chooser} is null.<p/> This once fixed a bug, but that bug never happens anymore, even without this method
-     * @return
+     * Checks if {@link BoardNetworkCoordinator#chooser} is null. <p> This once fixed a bug, but that bug never happens anymore, even without this method
+     *
+     * @return true if {@link BoardNetworkCoordinator#chooser} is null.
      */
     public boolean isChooserNull() {
         return (chooser == null);

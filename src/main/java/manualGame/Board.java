@@ -54,7 +54,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      */
     private final BoardNetworkCoordinator networkCoordinator;
     /**
-     * The panel on which the board is drawn.<p/>
+     * The panel on which the board is drawn.<br/>
      * See {@link Board.myPanel} for more details.
      */
     private final myPanel panel;
@@ -264,7 +264,6 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     }
 
 
-
 //    private void moveMade() {
 //        int result = EvaluatorNN.getChoice(gameState);
 //
@@ -295,8 +294,9 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
     /**
      * Calculates with brute force the closeness to victory (by evaluating possibility tree)
-     * @see WinAssessment#assessWin(State, int)
+     *
      * @return Returns the evaluator output as a double.
+     * @see WinAssessment#assessWin(State, int)
      */
     private double doThing() {
         CellState tes = gameState.checkWin();

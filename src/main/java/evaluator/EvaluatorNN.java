@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by itamar on 24-Apr-17.
+ * Created by itamar.
  */
 public class EvaluatorNN {
     /**
@@ -171,9 +171,9 @@ public class EvaluatorNN {
      * <p>
      * </table>
      *
-     * @param records
-     * @param totalSize
-     * @param model
+     * @param records list of {@link BoardWinPair} that is the training set
+     * @param totalSize size of board
+     * @param model the file to save the net model to.
      */
     public static void firstNeuralTest(List<BoardWinPair> records, int totalSize, File model) {
         int nHidden = totalSize * 3;
@@ -294,7 +294,7 @@ public class EvaluatorNN {
      * This method uses the neural network to evaluate the board and get the best column to choose.
      *
      * @param game the state of the board.
-     * @return
+     * @return the best column to choose.
      */
     public static int getChoice(State game) {
         System.out.println("entered \"brute force\" best single column selector");

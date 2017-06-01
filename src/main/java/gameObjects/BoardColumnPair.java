@@ -50,13 +50,16 @@ public class BoardColumnPair {
 
     /**
      * Getter for {@link BoardColumnPair#board}.
+     *
      * @return an array of doubles that are either 1,0 or -1.
      */
     public double[] getBoard() {
         return board;
     }
 
-    /**Setter for {@link BoardColumnPair#board} field.
+    /**
+     * Setter for {@link BoardColumnPair#board} field.
+     *
      * @param board an array containing 7x6 doubles that are 1.0,0.0,-1.0 exclusively.
      */
     public void setBoard(double[] board) {

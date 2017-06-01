@@ -33,13 +33,16 @@ public class BoardWinPair {
 
     /**
      * Getter for {@link BoardWinPair#board}.
+     *
      * @return an array of doubles that are either 1,0 or -1.
      */
     public double[] getBoard() {
         return board;
     }
 
-    /**Setter for {@link BoardWinPair#board} field.
+    /**
+     * Setter for {@link BoardWinPair#board} field.
+     *
      * @param board an array containing 7x6 doubles that are 1.0,0.0,-1.0 exclusively.
      */
     public void setBoard(double[] board) {
@@ -57,6 +60,7 @@ public class BoardWinPair {
 
     /**
      * Setter for {@link BoardWinPair#outcome} field.
+     *
      * @param outcome estimation of Red player's winning change
      */
     public void setOutcome(double outcome) {
