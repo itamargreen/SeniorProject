@@ -8,6 +8,8 @@ import com.seniorProject.gameObjects.BoardWinPair;
 import com.seniorProject.gameObjects.CellState;
 import com.seniorProject.gameObjects.State;
 import com.seniorProject.moveMaker.BoardNetworkCoordinator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,6 +35,7 @@ import java.util.List;
  */
 public class Board extends JFrame implements MouseListener, WindowListener {
 
+    private static final Logger log = LoggerFactory.getLogger(Board.class);
     /**
      * An integer that represents who's turn it is. 1 is blue, -1 is red.
      */
@@ -265,7 +268,6 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     }
 
 
-
 //
 
     public static String getEnv() {
@@ -318,6 +320,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         } else {
             System.out.println("entered move maker method in board");
             int result = networkCoordinator.getNNAction(gameState);
+            log.debug("the result was {}", result);
 
             if (result < 7 && result > -1) {
 
@@ -333,7 +336,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
 
 
             } else {
-                System.err.println("Problem!!");
+                log.error("Problem. Invalid result, {}", result);
             }
         }
     }
@@ -358,7 +361,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     private void trainChooser(State game) {
         System.out.println("entered training chooser method in board");
 
-        double[] column = EvaluatorNN.bestColumnFromHere(game);
+        double column = EvaluatorNN.bestColumnFromHere(game);
         BoardColumnPair pair = new BoardColumnPair(game.convertToArray(), column);
 
         if (networkCoordinator.isChooserNull()) {
@@ -443,16 +446,16 @@ public class Board extends JFrame implements MouseListener, WindowListener {
                 panel.setState(gameState);
 
                 repaint();
-//                if (autoCreateDataSet.isSelected()) {
-//                    trainEvaluator(gameState);
-//                    createChooserTrainSet(gameState);
-//                    //networkCoordinator.trainChooser();
-//
-//                }
-//                if (playerTurn == -1) {
-//                    System.out.println("Computer making move");
-//                    moveMade();
-//                }
+                if (autoCreateDataSet.isSelected()) {
+                    trainEvaluator(gameState);
+                    createChooserTrainSet(gameState);
+                    networkCoordinator.trainChooser();
+
+                }
+                if (playerTurn == -1) {
+                    System.out.println("Computer making move");
+                    moveMade();
+                }
 
                 break;
             }

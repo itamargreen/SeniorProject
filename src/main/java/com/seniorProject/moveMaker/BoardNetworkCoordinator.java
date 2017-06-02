@@ -27,7 +27,7 @@ public class BoardNetworkCoordinator {
     private File chooserModel;
     /**
      * File containing the training set for {@link ColumnChooser#net}'s neural network.
-     *
+     * <p>
      * <p> This is where new training examples are saved to.</p>
      */
     private File recordsColumn;
@@ -82,17 +82,8 @@ public class BoardNetworkCoordinator {
      * @return the computer's chosen action.
      */
     public int getNNAction(State game) {
-        double[] res = chooser.chooseColumn(game);
-        double max = Double.MIN_VALUE;
-        int result = -1;
-        for (int i = 0; i < res.length; i++) {
-            if (res[i] > max) {
-                max = res[i];
-                result = i;
-            }
-
-        }
-        return result;
+        double res = chooser.chooseColumn(game);
+        return Math.round((float) res);
     }
 
     /**

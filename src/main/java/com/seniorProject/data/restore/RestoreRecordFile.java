@@ -85,17 +85,14 @@ public class RestoreRecordFile {
                     String boardData = data[0];
                     String output = data[1];
                     String[] boardString = boardData.split(",");
-                    String[] outString = output.split(",");
-                    double[] out = new double[outString.length];
+
+                    double out = Double.parseDouble(output);
                     double[] input = new double[boardString.length];
                     for (int i = 0; i < boardString.length; i++) {
                         double temp = Double.parseDouble(boardString[i]);
                         input[i] = temp;
                     }
-                    for (int i = 0; i < out.length; i++) {
-                        out[i] = Double.parseDouble(outString[i]);
 
-                    }
 
                     BoardColumnPair pair = new BoardColumnPair(input, out);
                     records.add(pair);

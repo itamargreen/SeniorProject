@@ -45,7 +45,7 @@ public class WinAssessment {
 
         TreeNode<State> futureStates = new TreeNode<>(null, game, game.getWidth());
         formLayer(futureStates, -1, futureStates, 1);
-        diff = (countRed - countBlue) / Math.max(countBlue, countRed);
+        diff = (countRed - countBlue) / Math.max(Math.abs(countBlue), Math.abs(countRed)) / 2.0;
         System.out.println(diff + " after " + count);
 
         return futureStates;
@@ -75,9 +75,9 @@ public class WinAssessment {
             System.out.println("found victory for " + (node.getContent().checkWin()) + " after " + depth + " turns");
             return;
         } else {
+            //iterate over columns and create possibility tree for each column
             for (int i = 0; i < current.getWidth(); i++) {
                 State next = new State(current);
-
                 if (!next.makeMove(player, i)) {
                     //System.out.println("cannot make move at column "+i+", and at depth: "+depth);
                     return;
@@ -87,34 +87,27 @@ public class WinAssessment {
                     if (depth == 1) {
                         switch (next.checkWin()) {
                             case BLUE:
-                                countBlue += 3;
+                                countBlue -= 6;
                                 break;
                             case RED:
-                                countRed += 3;
+                                countRed += 6;
                                 break;
                         }
                     } else {
                         switch (next.checkWin()) {
                             case BLUE:
-                                double loseWeight = 0.05;
-                                countBlue += ((1 + loseWeight) / Math.pow(depth, 1));
+                                double loseWeight = 0.5;
+                                countBlue -= ((1 + loseWeight) / Math.pow(depth, 1));
                                 break;
                             case RED:
                                 countRed += (1 / Math.pow(depth, 1));
                                 break;
                         }
                     }
-
-
                 }
                 TreeNode<State> nextNode = new TreeNode<>(node, next, next.getWidth());
-
-
                 if (next.checkWin().equals(CellState.EMPTY)) {
-
                     formLayer(nextNode, player * (-1), parentNode, depth + 1);
-
-
                 }
 
 

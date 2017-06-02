@@ -1,5 +1,6 @@
 package com.seniorProject.evaluator;
 
+import com.seniorProject.data.write.WriteToRecordsFile;
 import com.seniorProject.gameObjects.BoardWinPair;
 import com.seniorProject.gameObjects.State;
 import org.deeplearning4j.api.storage.StatsStorage;
@@ -20,6 +21,8 @@ import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +39,7 @@ public class EvaluatorNN {
      * The number of iterations preformed on the com.seniorProject.data
      */
     private static final int iterations = 1;
+    private static final Logger log = LoggerFactory.getLogger(EvaluatorNN.class);
     /**
      * The neural network used by this class. Initialized in {@link EvaluatorNN#loadNN(File)} or in  {@link EvaluatorNN#firstNeuralTest(List, int, File)}
      */
@@ -52,7 +56,6 @@ public class EvaluatorNN {
      * Storage variable from the UI manager
      */
     private static StatsStorage storage;
-
 
     /**
      * Setter for {@link EvaluatorNN#storage}.
@@ -126,7 +129,7 @@ public class EvaluatorNN {
             iterator.reset();
             net.fit(iterator);
 
-        } while (++epoch < 10000 || net.score() > 15.0);
+        } while (++epoch < 1000);
 
         INDArray testIn = list.get(list.size() - 1).getFeatures();
         INDArray outputT = net.output(testIn);
@@ -155,7 +158,11 @@ public class EvaluatorNN {
      */
     public static void addPair(BoardWinPair... pairs) {
 
-        EvaluatorNN.recordsWinPairs.addAll(Arrays.asList(pairs));
+        List<BoardWinPair> pairList = Arrays.asList(pairs);
+        if (!recordsWinPairs.containsAll(Arrays.asList(pairs))) {
+            recordsWinPairs.addAll(pairList);
+        }
+        WriteToRecordsFile.writeRecords(recordsWinPairs, recordFile);
     }
 
     /**
@@ -171,9 +178,9 @@ public class EvaluatorNN {
      * <p>
      * </table>
      *
-     * @param records list of {@link BoardWinPair} that is the training set
+     * @param records   list of {@link BoardWinPair} that is the training set
      * @param totalSize size of board
-     * @param model the file to save the net model to.
+     * @param model     the file to save the net model to.
      */
     public static void firstNeuralTest(List<BoardWinPair> records, int totalSize, File model) {
         int nHidden = totalSize * 3;
@@ -231,7 +238,7 @@ public class EvaluatorNN {
                 iterator.reset();
                 net.fit(iterator);
 
-            } while (++epoch < 10000 || net.score() > 15.0);
+            } while (++epoch < 1000);
 
             System.out.println("finished training on epoch " + epoch + " and score change of " + (net.score() - initScore));
 
@@ -262,9 +269,9 @@ public class EvaluatorNN {
      * @param game The state of the board.
      * @return an array that looks like {@code {1,0,0,0,0,0,0,0}}, where the {@code 1} is placed in the index of the column that is the best move.
      */
-    public static double[] bestColumnFromHere(State game) {
+    public static double bestColumnFromHere(State game) {
         System.out.println("entered \"brute force\" best column selector");
-        double[] bestColumn = new double[game.getWidth()];
+        double bestColumn = -1;
         double max = -100;
         State nextMoveState;
 
@@ -277,11 +284,12 @@ public class EvaluatorNN {
             boardArray[0] = nextMoveState.convertToArray();
             INDArray input = Nd4j.create(boardArray);
             INDArray output = net.output(input, false);
+
             if (output.isScalar()) {
                 double evaluated = output.getDouble(0);
+                log.info("evaluation is: {}");
                 if (evaluated > max) {
-                    Arrays.fill(bestColumn, 0);
-                    bestColumn[column] = 1;
+                    bestColumn = column;
                     max = evaluated;
                 }
             }

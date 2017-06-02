@@ -1,7 +1,5 @@
 package com.seniorProject.gameObjects;
 
-import java.util.Arrays;
-
 /**
  * This class is an object that pairs the board to a column. Used as training com.seniorProject.data for {@link com.seniorProject.moveMaker.ColumnChooser chooser} neural network
  * <p>
@@ -14,8 +12,7 @@ public class BoardColumnPair {
      * An array of 1.0, 0.0 and -1.0. This represents the game board.
      */
     private double[] board;
-    private double[] column;
-    private double columnSingle;
+    private double column;
 
     /**
      * Constructor for BoardColumnPair
@@ -25,29 +22,10 @@ public class BoardColumnPair {
      */
     public BoardColumnPair(double[] board, double column) {
         this.board = board;
-        this.column = new double[7];
-        Arrays.fill(this.column, 0);
-        columnSingle = column;
-        this.column[(int) (column)] = 1;
+        this.column = column;
+
     }
 
-    /**
-     * Constructor for BoardColumnPair
-     *
-     * @param board  The double array that comes form {@link State#convertToArray()} method
-     * @param column The column vector of the pair
-     */
-    public BoardColumnPair(double[] board, double[] column) {
-        this.board = board;
-        this.column = column;
-        for (int i = 0; i < column.length; i++) {
-            double v = column[i];
-            if (v == 1.0) {
-                columnSingle = i;
-                break;
-            }
-        }
-    }
 
     /**
      * Getter for {@link BoardColumnPair#board}.
@@ -68,18 +46,16 @@ public class BoardColumnPair {
     }
 
 
-    public double[] getColumn() {
+    public double getColumn() {
         return column;
     }
 
     public void setColumn(double column) {
-        Arrays.fill(this.column, 0);
 
-        this.column[(int) (column)] = 1;
+
+        this.column = column;
 
     }
 
-    public double getColumnSingle() {
-        return columnSingle;
-    }
+
 }

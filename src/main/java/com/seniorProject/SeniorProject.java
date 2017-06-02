@@ -13,11 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -64,20 +59,20 @@ public class SeniorProject {
             dataFileDir.mkdir();
         }
         File res = new File(resourcePath);
-        Arrays.asList(res.listFiles()).forEach(file -> {
-            if (file.isFile()) {
-                String name = file.getName();
-                if (name.endsWith(".txt") || name.endsWith(".zip") || name.endsWith(".bin")) {
-                    Path destination = Paths.get(env, name);
-                    try {
-                        Files.copy(file.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-        });
+//        Arrays.asList(res.listFiles()).forEach(file -> {
+//            if (file.isFile()) {
+//                String name = file.getName();
+//                if (name.endsWith(".txt") || name.endsWith(".zip") || name.endsWith(".bin")) {
+//                    Path destination = Paths.get(env, name);
+//                    try {
+//                        Files.copy(file.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//
+//        });
         recordsWinPairs = new File(env + "\\recordsWinPairs.txt");
         if (!recordsWinPairs.exists()) {
             try {
