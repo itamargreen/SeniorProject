@@ -58,10 +58,14 @@ public class RestoreRecordFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Set<BoardWinPair> set = new HashSet<>();
-        set.addAll(records);
-        records.clear();
-        records.addAll(set);
+        List<BoardWinPair> list = new ArrayList<>();
+        Set<BoardWinPair> uniqueValues = new HashSet<>();
+        for (BoardWinPair record : records)
+            if (uniqueValues.add(record))
+                list.add(record);
+
+
+        records = list;
         return records;
     }
 
@@ -110,10 +114,11 @@ public class RestoreRecordFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Set<BoardColumnPair> set = new HashSet<>();
-        set.addAll(records);
-        records.clear();
-        records.addAll(set);
+        List<BoardColumnPair> list = new ArrayList<>();
+        Set<BoardColumnPair> uniqueValues = new HashSet<>();
+        for (BoardColumnPair record : records)
+            if (uniqueValues.add(record)) list.add(record);
+        records = list;
         return records;
     }
 

@@ -480,10 +480,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      * {@inheritDoc}
      */
     public void windowClosing(WindowEvent e) {
-
-        if (autoCreateDataSet.isSelected())
-            networkCoordinator.trainChooser();
-
+        networkCoordinator.trainChooser();
+        EvaluatorNN.train(evaluatorModel, boardHeight * boardWidth);
         copyToResources();
         System.exit(0);
     }
