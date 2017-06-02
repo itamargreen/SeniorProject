@@ -8,7 +8,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class has static methods for reading lists of {@link BoardColumnPair} and {@link BoardWinPair} from their respective files.
@@ -56,6 +58,14 @@ public class RestoreRecordFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        List<BoardWinPair> list = new ArrayList<>();
+        Set<BoardWinPair> uniqueValues = new HashSet<>();
+        for (BoardWinPair record : records)
+            if (uniqueValues.add(record))
+                list.add(record);
+
+
+        records = list;
         return records;
     }
 
@@ -104,6 +114,11 @@ public class RestoreRecordFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        List<BoardColumnPair> list = new ArrayList<>();
+        Set<BoardColumnPair> uniqueValues = new HashSet<>();
+        for (BoardColumnPair record : records)
+            if (uniqueValues.add(record)) list.add(record);
+        records = list;
         return records;
     }
 

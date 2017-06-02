@@ -9,8 +9,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class has static methods for writing lists of {@link BoardColumnPair} and {@link BoardWinPair} to their respective files.
@@ -22,6 +21,7 @@ public class WriteToRecordsFile {
 
 
     private static final Logger logger = LoggerFactory.getLogger(WriteToRecordsFile.class);
+
     /**
      * This method write a list of {@link BoardWinPair} to the specified file. Uses a bit of regex here and there and a BufferedWriter
      *
@@ -30,7 +30,14 @@ public class WriteToRecordsFile {
      * @see BufferedWriter
      */
     public static void writeRecords(List<BoardWinPair> records, File recordFile) {
-
+        List<BoardWinPair> list = new ArrayList<>();
+        Set<BoardWinPair> uniqueValues = new HashSet<>();
+        for (BoardWinPair record : records) {
+            if (uniqueValues.add(record)) {
+                list.add(record);
+            }
+        }
+        records = list;
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(recordFile));
 
@@ -78,7 +85,14 @@ public class WriteToRecordsFile {
      * @see BufferedWriter
      */
     public static void writeColumnRecords(List<BoardColumnPair> records, File recordFile) {
-
+        List<BoardColumnPair> list = new ArrayList<>();
+        Set<BoardColumnPair> uniqueValues = new HashSet<>();
+        for (BoardColumnPair record : records) {
+            if (uniqueValues.add(record)) {
+                list.add(record);
+            }
+        }
+        records = list;
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(recordFile));
 

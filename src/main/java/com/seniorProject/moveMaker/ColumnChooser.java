@@ -89,12 +89,12 @@ class ColumnChooser {
         int numOutputs = 1;
 
 
-        double learningRate = 1e-5;
+        double learningRate = 1e-3;
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
-                .iterations(5)
+                .iterations(1)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .weightInit(WeightInit.RELU)
-                .activation(Activation.RELU)
+                .activation(Activation.SIGMOID)
                 .learningRate(learningRate)
                 .regularization(true).l2(1e-4)
                 .list()
@@ -102,11 +102,12 @@ class ColumnChooser {
                         .build())
                 .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
                         .build())
-                .layer(2, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
+                .layer(2, new DenseLayer.Builder().nIn(nHidden).nOut(width)
+                        .activation(Activation.SOFTSIGN)
                         .build())
                 .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                        .activation(Activation.SIGMOID)
-                        .nIn(nHidden).nOut(numOutputs).build())
+                        .activation(Activation.IDENTITY)
+                        .nIn(width).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
 //        }
 
@@ -153,7 +154,7 @@ class ColumnChooser {
 
             net.fit(iterator);
             //net.score() < 0.65 &&
-        } while (++epoch < 125);
+        } while (++epoch < 5);
         System.out.println("finished training");
 
         System.out.println("writing to file in chooser");
@@ -186,7 +187,7 @@ class ColumnChooser {
             INDArray output = net.output(input, false);
             log.info("network output is actually {}", output.getDouble(0));
             if (output.isScalar()) {
-                double res = output.getDouble(0) * 8.0;
+                double res = output.getDouble(0) * 9.0;
                 return res;
             }
             return -1.0;

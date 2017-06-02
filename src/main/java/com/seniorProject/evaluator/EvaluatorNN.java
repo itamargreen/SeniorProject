@@ -129,7 +129,7 @@ public class EvaluatorNN {
             iterator.reset();
             net.fit(iterator);
 
-        } while (++epoch < 1000);
+        } while (++epoch < 200);
 
         INDArray testIn = list.get(list.size() - 1).getFeatures();
         INDArray outputT = net.output(testIn);
@@ -238,7 +238,7 @@ public class EvaluatorNN {
                 iterator.reset();
                 net.fit(iterator);
 
-            } while (++epoch < 1000);
+            } while (++epoch < 200);
 
             System.out.println("finished training on epoch " + epoch + " and score change of " + (net.score() - initScore));
 
