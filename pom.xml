@@ -7,6 +7,11 @@
     <groupId>mySeniorProject</groupId>
     <artifactId>seniorProjectArt</artifactId>
     <version>1.0</version>
+    <properties>
+        <log4j.version>2.8.2</log4j.version>
+        <slf4j.version>1.7.25</slf4j.version>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -18,6 +23,39 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>com.seniorProject.SeniorProject</mainClass>
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>
+                                ${project.build.directory}/lib/
+                            </outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -25,16 +63,26 @@
             </resource>
         </resources>
     </build>
+
     <dependencies>
+        <!-- The slf4j API -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <!-- Route logging to SLF4J to log4j2 -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>2.8</version>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>${log4j.version}</version>
+            <scope>runtime</scope>
         </dependency>
+        <!-- Logging implementation -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.8</version>
+            <version>${log4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.deeplearning4j</groupId>
@@ -63,11 +111,11 @@
             <version>3.4.0</version>
 
         </dependency>
-        <dependency>
-            <groupId>org.deeplearning4j</groupId>
-            <artifactId>deeplearning4j-ui-parent</artifactId>
-            <version>0.8.0</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.deeplearning4j</groupId>-->
+            <!--<artifactId>deeplearning4j-ui-parent</artifactId>-->
+            <!--<version>0.8.0</version>-->
+        <!--</dependency>-->
         <!-- https://mvnrepository.com/artifact/org.deeplearning4j/deeplearning4j-ui-resources -->
         <dependency>
             <groupId>org.deeplearning4j</groupId>
