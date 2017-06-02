@@ -10,7 +10,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class has static methods for writing lists of {@link BoardColumnPair} and {@link BoardWinPair} to their respective files.
@@ -30,7 +32,10 @@ public class WriteToRecordsFile {
      * @see BufferedWriter
      */
     public static void writeRecords(List<BoardWinPair> records, File recordFile) {
-
+        Set<BoardWinPair> set = new HashSet<>();
+        set.addAll(records);
+        records.clear();
+        records.addAll(set);
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(recordFile));
 
@@ -78,7 +83,10 @@ public class WriteToRecordsFile {
      * @see BufferedWriter
      */
     public static void writeColumnRecords(List<BoardColumnPair> records, File recordFile) {
-
+        Set<BoardColumnPair> set = new HashSet<>();
+        set.addAll(records);
+        records.clear();
+        records.addAll(set);
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(recordFile));
 
