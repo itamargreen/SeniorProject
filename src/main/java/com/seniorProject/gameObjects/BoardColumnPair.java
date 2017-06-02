@@ -1,13 +1,13 @@
-package gameObjects;
+package com.seniorProject.gameObjects;
 
 import java.util.Arrays;
 
 /**
- * This class is an object that pairs the board to a column. Used as training data for {@link moveMaker.ColumnChooser chooser} neural network
+ * This class is an object that pairs the board to a column. Used as training com.seniorProject.data for {@link com.seniorProject.moveMaker.ColumnChooser chooser} neural network
  * <p>
  * Created by Itamar
  *
- * @see moveMaker.ColumnChooser
+ * @see com.seniorProject.moveMaker.ColumnChooser
  */
 public class BoardColumnPair {
     /**
@@ -25,6 +25,7 @@ public class BoardColumnPair {
      */
     public BoardColumnPair(double[] board, double column) {
         this.board = board;
+        this.column = new double[7];
         Arrays.fill(this.column, 0);
         columnSingle = column;
         this.column[(int) (column)] = 1;

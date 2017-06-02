@@ -1,8 +1,10 @@
-import data.restore.RestoreRecordFile;
-import evaluator.EvaluatorNN;
-import gameObjects.BoardWinPair;
-import manualGame.Board;
-import moveMaker.BoardNetworkCoordinator;
+package com.seniorProject;
+
+import com.seniorProject.data.restore.RestoreRecordFile;
+import com.seniorProject.evaluator.EvaluatorNN;
+import com.seniorProject.gameObjects.BoardWinPair;
+import com.seniorProject.manualGame.Board;
+import com.seniorProject.moveMaker.BoardNetworkCoordinator;
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.ui.api.UIServer;
 import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
@@ -24,22 +26,22 @@ import java.util.List;
  * Created by User on 29-Apr-17.
  */
 
-public class ConnectingFourNNs {
+public class SeniorProject {
 
     /**
      * Logger for this class
      */
-    public static Logger logger = LoggerFactory.getLogger(ConnectingFourNNs.class);
+    private static Logger logger = LoggerFactory.getLogger(SeniorProject.class);
     /**
      * Metadata directory
      */
     private static File dataFileDir;
     /**
-     * Training set for {@link evaluator.EvaluatorNN} neural network. This is a .txt file
+     * Training set for {@link com.seniorProject.evaluator.EvaluatorNN} neural network. This is a .txt file
      */
     private static File recordsWinPairs;
     /**
-     * Training set for {@link moveMaker.ColumnChooser} neural network. This is a .txt file
+     * Training set for {@link com.seniorProject.moveMaker.ColumnChooser} neural network. This is a .txt file
      */
     private static File recordColumnFile;
 
@@ -49,7 +51,8 @@ public class ConnectingFourNNs {
      * @param args - Passed from cmd. Not needed.
      */
     public static void main(String[] args) {
-        String resourcePath = ConnectingFourNNs.class.getResource("/").getPath();
+
+        String resourcePath = SeniorProject.class.getResource("/").getPath();
         String env = System.getenv("AppData") + "\\SeniorProjectDir\\";
         dataFileDir = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
 
@@ -98,7 +101,7 @@ public class ConnectingFourNNs {
         File chooser = new File(env + "\\ChooserModel.zip");
         List<BoardWinPair> record = RestoreRecordFile.readRecords(recordsWinPairs);
         EvaluatorNN.setStats(statsStorage);
-        EvaluatorNN.loadNN(model, record);
+        EvaluatorNN.loadNN(model);
 
         BoardNetworkCoordinator networkCoordinator = new BoardNetworkCoordinator(chooser, recordColumnFile);
         networkCoordinator.setStorage(statsStorage);

@@ -1,15 +1,15 @@
-package gameObjects;
+package com.seniorProject.gameObjects;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * This object is used everywhere. It is an object used for describing a board (not to be confused with {@link manualGame.Board}, which does something else).
+ * This object is used everywhere. It is an object used for describing a board (not to be confused with {@link com.seniorProject.manualGame.Board}, which does something else).
  * <p>
  * Has a handful of methods that make using the information it stores very simple
  *
- * @see manualGame.Board
+ * @see com.seniorProject.manualGame.Board
  * Created by Itamar.
  */
 public class State {
@@ -37,7 +37,7 @@ public class State {
     /**
      * Copy constructor.
      *
-     * @param copy The state to copy the data from.
+     * @param copy The state to copy the com.seniorProject.data from.
      */
     public State(State copy) {
         cellStates = new CellState[copy.getHeight()][copy.getWidth()];
@@ -290,6 +290,15 @@ public class State {
      */
     public CellState[][] getCellStates() {
         return cellStates;
+    }
+
+    public void newGame(int width, int height) {
+        this.width = width;
+        this.height = height;
+        cellStates = new CellState[height][width];
+        for (int i = 0; i < this.height; i++) {
+            Arrays.fill(cellStates[i], CellState.EMPTY);
+        }
     }
 
 }

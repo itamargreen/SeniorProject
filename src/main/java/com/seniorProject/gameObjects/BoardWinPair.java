@@ -1,9 +1,9 @@
-package gameObjects;
+package com.seniorProject.gameObjects;
 
-import evaluator.EvaluatorNN;
+import com.seniorProject.evaluator.EvaluatorNN;
 
 /**
- * This class is an object that pairs the board to an outcome. Used as training data for {@link EvaluatorNN} neural network
+ * This class is an object that pairs the board to an outcome. Used as training com.seniorProject.data for {@link EvaluatorNN} neural network
  * <p>
  * Created by Itamar
  *
@@ -24,7 +24,7 @@ public class BoardWinPair {
      * Constructor for BoardWinPair.
      *
      * @param board   The double array that comes form {@link State#convertToArray()} method
-     * @param outcome The outcome of the specified board, calculated by {@link bruteForceCalculation.WinAssessment} class.
+     * @param outcome The outcome of the specified board, calculated by {@link com.seniorProject.bruteForceCalculation.WinAssessment} class.
      */
     public BoardWinPair(double[] board, double outcome) {
         this.board = board;

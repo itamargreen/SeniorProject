@@ -1,4 +1,4 @@
-package moveMaker;
+package com.seniorProject.moveMaker;
 
 import org.apache.commons.math3.util.Pair;
 import org.nd4j.linalg.activations.BaseActivationFunction;

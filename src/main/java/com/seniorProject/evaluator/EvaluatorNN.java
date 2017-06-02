@@ -1,7 +1,7 @@
-package evaluator;
+package com.seniorProject.evaluator;
 
-import gameObjects.BoardWinPair;
-import gameObjects.State;
+import com.seniorProject.gameObjects.BoardWinPair;
+import com.seniorProject.gameObjects.State;
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.eval.RegressionEvaluation;
@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class EvaluatorNN {
     /**
-     * The number of iterations preformed on the data
+     * The number of iterations preformed on the com.seniorProject.data
      */
     private static final int iterations = 1;
     /**
@@ -45,7 +45,7 @@ public class EvaluatorNN {
      */
     private static List<BoardWinPair> recordsWinPairs = new ArrayList<>();
     /**
-     * The file in which {@link EvaluatorNN#recordsWinPairs} gets saved by {@link data.write.WriteToRecordsFile#writeRecords(List, File)}
+     * The file in which {@link EvaluatorNN#recordsWinPairs} gets saved by {@link com.seniorProject.data.write.WriteToRecordsFile#writeRecords(List, File)}
      */
     private static File recordFile = new File(System.getenv("AppData") + "\\SeniorProjectDir\\recordsWinPairs.txt");
     /**
@@ -68,7 +68,7 @@ public class EvaluatorNN {
      * <p>
      * <p>Uses {@link org.deeplearning4j.util.ModelSerializer#restoreMultiLayerNetwork(java.io.File)} to load the model.
      *
-     * @param model From where to load the neural network to use as the evaluator.
+     * @param model From where to load the neural network to use as the com.seniorProject.evaluator.
      */
     public static void loadNN(File model) {
         try {
@@ -84,7 +84,7 @@ public class EvaluatorNN {
     /**
      * Used instead of {@link EvaluatorNN#loadNN(File)} to create a neural network, using the configuration described in {@link EvaluatorNN#firstNeuralTest(List, int, File)};
      *
-     * @param model   Where to save the neural network after creating and training it on the data in {@code records}
+     * @param model   Where to save the neural network after creating and training it on the com.seniorProject.data in {@code records}
      * @param records The list of {@link BoardWinPair} that are a training dataset for the neural network.
      */
     public static void loadNN(File model, List<BoardWinPair> records) {
@@ -92,7 +92,7 @@ public class EvaluatorNN {
     }
 
     /**
-     * Trains the neural network on the data in {@link EvaluatorNN#recordsWinPairs}.
+     * Trains the neural network on the com.seniorProject.data in {@link EvaluatorNN#recordsWinPairs}.
      * <p>
      * <p>
      * <p>After training, saves the trained model to the file specified by {@code model}

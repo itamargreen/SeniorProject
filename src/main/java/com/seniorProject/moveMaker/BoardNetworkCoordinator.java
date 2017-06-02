@@ -1,10 +1,10 @@
-package moveMaker;
+package com.seniorProject.moveMaker;
 
-import data.restore.RestoreRecordFile;
-import data.write.WriteToRecordsFile;
-import gameObjects.BoardColumnPair;
-import gameObjects.State;
-import manualGame.Board;
+import com.seniorProject.data.restore.RestoreRecordFile;
+import com.seniorProject.data.write.WriteToRecordsFile;
+import com.seniorProject.gameObjects.BoardColumnPair;
+import com.seniorProject.gameObjects.State;
+import com.seniorProject.manualGame.Board;
 import org.deeplearning4j.api.storage.StatsStorage;
 
 import java.io.File;
@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Coordinator between {@link manualGame.Board} and {@link ColumnChooser}.
+ * Coordinator between {@link com.seniorProject.manualGame.Board} and {@link ColumnChooser}.
  * <p>
  * This manages getting results from the column chooser and training the chooser
  * <p>

@@ -1,7 +1,7 @@
-package data.restore;
+package com.seniorProject.data.restore;
 
-import gameObjects.BoardColumnPair;
-import gameObjects.BoardWinPair;
+import com.seniorProject.gameObjects.BoardColumnPair;
+import com.seniorProject.gameObjects.BoardWinPair;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * This class has static methods for reading lists of {@link BoardColumnPair} and {@link BoardWinPair} from their respective files.
  * <p>
- * Has a "brother" ({@link data.write.WriteToRecordsFile}) that writes to those same files.
+ * Has a "brother" ({@link com.seniorProject.data.write.WriteToRecordsFile}) that writes to those same files.
  * Created by Itamar.
  */
 public class RestoreRecordFile {
@@ -75,8 +75,12 @@ public class RestoreRecordFile {
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(":");
                 if (data.length != 2) {
-                    System.err.println("Wait what?");
-                    System.exit(1);
+                    if (!(line.isEmpty())) {
+                        System.err.println("Bad Format of line");
+                        System.exit(1);
+                    } else {
+                        continue;
+                    }
                 } else {
                     String boardData = data[0];
                     String output = data[1];

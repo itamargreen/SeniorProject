@@ -1,13 +1,13 @@
-package manualGame;
+package com.seniorProject.manualGame;
 
-import bruteForceCalculation.WinAssessment;
-import data.write.WriteToRecordsFile;
-import evaluator.EvaluatorNN;
-import gameObjects.BoardColumnPair;
-import gameObjects.BoardWinPair;
-import gameObjects.CellState;
-import gameObjects.State;
-import moveMaker.BoardNetworkCoordinator;
+import com.seniorProject.bruteForceCalculation.WinAssessment;
+import com.seniorProject.data.write.WriteToRecordsFile;
+import com.seniorProject.evaluator.EvaluatorNN;
+import com.seniorProject.gameObjects.BoardColumnPair;
+import com.seniorProject.gameObjects.BoardWinPair;
+import com.seniorProject.gameObjects.CellState;
+import com.seniorProject.gameObjects.State;
+import com.seniorProject.moveMaker.BoardNetworkCoordinator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * This class is the main GUI creator and handles. The {@link myPanel myPanel} class is a JPanel that handles actually drawing the board. This class handles coordinating pieces of the program, except for the {@link moveMaker.ColumnChooser chooser}, which has its own {@link BoardNetworkCoordinator coordinator}.
+ * This class is the main GUI creator and handles. The {@link myPanel myPanel} class is a JPanel that handles actually drawing the board. This class handles coordinating pieces of the program, except for the {@link com.seniorProject.moveMaker.ColumnChooser chooser}, which has its own {@link BoardNetworkCoordinator coordinator}.
  * <p>
  * I did it like this because this is how I do GUI when I have to make it from scratch (without any gui creator like WindowBuilder or netbeans ide).
  * Created by Itamar.
@@ -46,11 +46,11 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      */
     private static int moveCounter = 0;
     /**
-     * Checkbox in debugging and control panel for creating training data while playing.
+     * Checkbox in debugging and control panel for creating training com.seniorProject.data while playing.
      */
     private final JCheckBox autoCreateDataSet = new JCheckBox("Create Dataset");
     /**
-     * A coordinator between the Board and the {@link moveMaker.ColumnChooser} that beats the human player.
+     * A coordinator between the Board and the {@link com.seniorProject.moveMaker.ColumnChooser} that beats the human player.
      */
     private final BoardNetworkCoordinator networkCoordinator;
     /**
@@ -67,7 +67,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      */
     private final JFrame frame = new JFrame();
     /**
-     * {@link evaluator.EvaluatorNN} training set counter.
+     * {@link com.seniorProject.evaluator.EvaluatorNN} training set counter.
      */
     private final JLabel whenAddingRecord = new JLabel("waiting...");
     /**
@@ -75,15 +75,15 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      */
     private File dataFileDir;
     /**
-     * File containing training set for {@link evaluator.EvaluatorNN} neural network. The file is written by {@link WriteToRecordsFile}.
+     * File containing training set for {@link com.seniorProject.evaluator.EvaluatorNN} neural network. The file is written by {@link WriteToRecordsFile}.
      */
     private File recordFile;
     /**
-     * File containing the saved neural network model for {@link evaluator.EvaluatorNN}.
+     * File containing the saved neural network model for {@link com.seniorProject.evaluator.EvaluatorNN}.
      */
     private File evaluatorModel;
     /**
-     * A {@link List} of the training set for {@link evaluator.EvaluatorNN#net}.
+     * A {@link List} of the training set for {@link com.seniorProject.evaluator.EvaluatorNN#net}.
      */
     private List<BoardWinPair> record = new ArrayList<>();
     /**
@@ -102,11 +102,11 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      *
      * @param boardWidth         Board width
      * @param boardHeight        Board height
-     * @param env                Game data folder path
-     * @param dataFileDir        Game data file
-     * @param recordFile         Training data for evaluator nn
+     * @param env                Game com.seniorProject.data folder path
+     * @param dataFileDir        Game com.seniorProject.data file
+     * @param recordFile         Training com.seniorProject.data for com.seniorProject.evaluator nn
      * @param evaluatorModel     Evaluator nn save evaluatorModel
-     * @param record             Evaluator nn training data in List data structure
+     * @param record             Evaluator nn training com.seniorProject.data in List com.seniorProject.data structure
      * @param networkCoordinator Coordinator between the game and the column chooser NN
      */
     public Board(int boardWidth, int boardHeight, String env, File dataFileDir, File recordFile, File evaluatorModel, List<BoardWinPair> record, BoardNetworkCoordinator networkCoordinator) {
@@ -170,11 +170,12 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         });
         container.add(loadNet);
 
-        JButton discardList = new JButton("new data");
+        JButton discardList = new JButton("new game");
         discardList.addActionListener(e -> {
-            setRecord(new ArrayList<>());
-
-            whenAddingRecord.setText("now has " + record.size() + " records");
+            gameState.newGame(boardWidth, boardHeight);
+//            setRecord(new ArrayList<>());
+//
+//            whenAddingRecord.setText("now has " + record.size() + " records");
         });
         container.add(discardList);
 
@@ -183,7 +184,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         calculate.addActionListener(e -> {
             if (gameState.checkWin().equals(CellState.EMPTY)) {
                 double[] input = gameState.convertToArray();
-                double out = doThing();
+                double out = assessRedWin();
                 BoardWinPair pair = new BoardWinPair(input, out);
 
 
@@ -264,23 +265,6 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     }
 
 
-//    private void moveMade() {
-//        int result = EvaluatorNN.getChoice(gameState);
-//
-//        if (result < 7 && result > -1) {
-//
-//            if (gameState.makeMove(playerTurn, result)) {
-//                panel.setState(gameState);
-//                repaint();
-//                playerTurn = -playerTurn;
-//            }
-//
-//
-//        } else {
-//            System.err.println("Problem!!");
-//        }
-//    }
-
 
 //
 
@@ -295,14 +279,14 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     /**
      * Calculates with brute force the closeness to victory (by evaluating possibility tree)
      *
-     * @return Returns the evaluator output as a double.
+     * @return Returns the com.seniorProject.evaluator output as a double.
      * @see WinAssessment#assessWin(State, int)
      */
-    private double doThing() {
+    private double assessRedWin() {
         CellState tes = gameState.checkWin();
         System.out.println(tes);
         WinAssessment.assessWin(gameState, -1);
-        return WinAssessment.diff;
+        return WinAssessment.getDiff();
     }
 
     /**
@@ -312,7 +296,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      */
     private void trainEvaluator(State gameState) {
         double[] input = gameState.convertToArray();
-        double out = doThing();
+        double out = assessRedWin();
         BoardWinPair pair = new BoardWinPair(input, out);
         record.add(pair);
         whenAddingRecord.setText("now has " + record.size() + " records");
@@ -459,16 +443,16 @@ public class Board extends JFrame implements MouseListener, WindowListener {
                 panel.setState(gameState);
 
                 repaint();
-                if (autoCreateDataSet.isSelected()) {
-                    trainEvaluator(gameState);
-                    createChooserTrainSet(gameState);
-                    //networkCoordinator.trainChooser();
-
-                }
-                if (playerTurn == -1) {
-                    System.out.println("Computer making move");
-                    moveMade();
-                }
+//                if (autoCreateDataSet.isSelected()) {
+//                    trainEvaluator(gameState);
+//                    createChooserTrainSet(gameState);
+//                    //networkCoordinator.trainChooser();
+//
+//                }
+//                if (playerTurn == -1) {
+//                    System.out.println("Computer making move");
+//                    moveMade();
+//                }
 
                 break;
             }

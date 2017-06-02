@@ -1,4 +1,4 @@
-package gameObjects;
+package com.seniorProject.gameObjects;
 
 /**
  * Enum that makes the management of the {@link State} object <b><u>SO MUCH EASIER</u></b>

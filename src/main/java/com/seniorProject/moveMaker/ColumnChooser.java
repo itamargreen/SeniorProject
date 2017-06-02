@@ -1,14 +1,13 @@
-package moveMaker;
+package com.seniorProject.moveMaker;
 
-import gameObjects.BoardColumnPair;
-import gameObjects.State;
+import com.seniorProject.gameObjects.BoardColumnPair;
+import com.seniorProject.gameObjects.State;
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.earlystopping.saver.LocalFileModelSaver;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -47,7 +46,7 @@ class ColumnChooser {
     /**
      * Constructor for the chooser.
      *
-     * @param boardColumnPairs Training data
+     * @param boardColumnPairs Training com.seniorProject.data
      * @param height           Height of the board.
      * @param width            Width of the board.
      * @param saved            Save file (.bin) of the model.
@@ -83,33 +82,27 @@ class ColumnChooser {
     private void createColumnChooser() {
         int totalSize = height * width;
         int numInput = totalSize;
-        int nHidden = totalSize / 2;
+        int nHidden = totalSize * 2;
         int numOutputs = width;
 
 
-        double learningRate = 0.003;
+        double learningRate = 1e-5;
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
                 .seed(1562)
                 .iterations(1)
-                .optimizationAlgo(OptimizationAlgorithm.LBFGS)
-                .weightInit(WeightInit.XAVIER_LEGACY)
-                .updater(Updater.ADAGRAD)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .weightInit(WeightInit.XAVIER)
+                .learningRate(learningRate)
+                .regularization(true).l2(1e-4)
                 .list()
                 .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-                        .activation(Activation.LEAKYRELU).learningRate(0.005)
                         .build())
-                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3 * 2)
-                        .activation(Activation.RELU).learningRate(0.5)
+                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
                         .build())
-                .layer(2, new DenseLayer.Builder().nIn(nHidden / 3 * 2).nOut(nHidden / 3)
-                        .activation(Activation.ELU).learningRate(0.05)
-                        .build())
-                .layer(3, new DenseLayer.Builder().nIn(nHidden / 3).nOut(nHidden / 6)
-                        .activation(Activation.RRELU).learningRate(0.005)
-                        .build())
-                .layer(4, new OutputLayer.Builder(LossFunctions.LossFunction.SQUARED_HINGE)
+
+                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                         .activation(Activation.IDENTITY)
-                        .nIn(nHidden / 6).nOut(numOutputs).build())
+                        .nIn(nHidden).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
 //        }
         double[][] labelArray = new double[width][width];

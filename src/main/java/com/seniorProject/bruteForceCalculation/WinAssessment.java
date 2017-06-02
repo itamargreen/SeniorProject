@@ -1,8 +1,8 @@
-package bruteForceCalculation;
+package com.seniorProject.bruteForceCalculation;
 
 import com.diffplug.common.base.TreeNode;
-import gameObjects.CellState;
-import gameObjects.State;
+import com.seniorProject.gameObjects.CellState;
+import com.seniorProject.gameObjects.State;
 
 /**
  * This class would be static, if Java was like C#. But this is Java so it has static methods and members. It creates a single training set for the Evaluator Neural network, using brute force
@@ -13,9 +13,8 @@ import gameObjects.State;
  * Created by itamar on 23-Mar-17.
  */
 public class WinAssessment {
-    @Deprecated
-    public static boolean[] fill;
-    public static double diff = 0;
+
+    private static double diff = 0;
     /**
      * Counter for number of moves tested.
      */
@@ -89,16 +88,20 @@ public class WinAssessment {
                         switch (next.checkWin()) {
                             case BLUE:
                                 countBlue += 3;
+                                break;
                             case RED:
                                 countRed += 3;
+                                break;
                         }
                     } else {
                         switch (next.checkWin()) {
                             case BLUE:
                                 double loseWeight = 0.05;
                                 countBlue += ((1 + loseWeight) / Math.pow(depth, 1));
+                                break;
                             case RED:
                                 countRed += (1 / Math.pow(depth, 1));
+                                break;
                         }
                     }
 
@@ -119,5 +122,7 @@ public class WinAssessment {
         }
     }
 
-
+    public static double getDiff() {
+        return diff;
+    }
 }

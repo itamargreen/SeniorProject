@@ -1,4 +1,4 @@
-package evaluator.evaluator.suppliers;
+package com.seniorProject.evaluator.evaluator.suppliers;
 
 import java.util.function.Supplier;
 

@@ -1,7 +1,7 @@
-package data.write;
+package com.seniorProject.data.write;
 
-import gameObjects.BoardColumnPair;
-import gameObjects.BoardWinPair;
+import com.seniorProject.gameObjects.BoardColumnPair;
+import com.seniorProject.gameObjects.BoardWinPair;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * This class has static methods for writing lists of {@link BoardColumnPair} and {@link BoardWinPair} to their respective files.
  * <p>
- * Has a "brother" ({@link data.restore.RestoreRecordFile}) that reads from those same files and converts them back to lists.
+ * Has a "brother" ({@link com.seniorProject.data.restore.RestoreRecordFile}) that reads from those same files and converts them back to lists.
  * Created by Itamar.
  */
 public class WriteToRecordsFile {
