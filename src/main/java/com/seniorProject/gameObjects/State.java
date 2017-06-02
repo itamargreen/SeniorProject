@@ -1,15 +1,15 @@
-package gameObjects;
+package com.seniorProject.gameObjects;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * This object is used everywhere. It is an object used for describing a board (not to be confused with {@link manualGame.Board}, which does something else).
+ * This object is used everywhere. It is an object used for describing a board (not to be confused with {@link com.seniorProject.manualGame.Board}, which does something else).
  * <p>
  * Has a handful of methods that make using the information it stores very simple
  *
- * @see manualGame.Board
+ * @see com.seniorProject.manualGame.Board
  * Created by Itamar.
  */
 public class State {
@@ -37,7 +37,7 @@ public class State {
     /**
      * Copy constructor.
      *
-     * @param copy The state to copy the data from.
+     * @param copy The state to copy the com.seniorProject.data from.
      */
     public State(State copy) {
         cellStates = new CellState[copy.getHeight()][copy.getWidth()];
@@ -137,6 +137,11 @@ public class State {
         return res;
     }
 
+    /**
+     * Loads the state that was saved to the given array
+     *
+     * @param boardArray array size of {@link State#height}*{@link State#width} that has {@code 1.0,-1.0,0.0}
+     */
     public void fromArray(double[] boardArray) {
 
         for (int i = 0; i < height * width; i++) {
@@ -278,8 +283,22 @@ public class State {
         return CellState.EMPTY;
     }
 
+    /**
+     * Getter for {@link State#cellStates}
+     *
+     * @return a 2D array of {@link CellState} that represents the state of the board.
+     */
     public CellState[][] getCellStates() {
         return cellStates;
+    }
+
+    public void newGame(int width, int height) {
+        this.width = width;
+        this.height = height;
+        cellStates = new CellState[height][width];
+        for (int i = 0; i < this.height; i++) {
+            Arrays.fill(cellStates[i], CellState.EMPTY);
+        }
     }
 
 }

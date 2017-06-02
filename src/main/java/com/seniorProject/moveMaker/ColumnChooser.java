@@ -1,14 +1,13 @@
-package moveMaker;
+package com.seniorProject.moveMaker;
 
-import gameObjects.BoardColumnPair;
-import gameObjects.State;
+import com.seniorProject.gameObjects.BoardColumnPair;
+import com.seniorProject.gameObjects.State;
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.earlystopping.saver.LocalFileModelSaver;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -22,6 +21,8 @@ import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.util.List;
  * Created by Itamar.
  */
 class ColumnChooser {
+    private static final Logger log = LoggerFactory.getLogger(ColumnChooser.class);
     private final int seed = 12345;
     private MultiLayerNetwork net = null;
     private List<BoardColumnPair> boardColumnPairs;
@@ -47,7 +49,7 @@ class ColumnChooser {
     /**
      * Constructor for the chooser.
      *
-     * @param boardColumnPairs Training data
+     * @param boardColumnPairs Training com.seniorProject.data
      * @param height           Height of the board.
      * @param width            Width of the board.
      * @param saved            Save file (.bin) of the model.
@@ -83,45 +85,35 @@ class ColumnChooser {
     private void createColumnChooser() {
         int totalSize = height * width;
         int numInput = totalSize;
-        int nHidden = totalSize / 2;
-        int numOutputs = width;
+        int nHidden = totalSize + 5;
+        int numOutputs = 1;
 
 
-        double learningRate = 0.003;
+        double learningRate = 1e-3;
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
-                .seed(1562)
                 .iterations(1)
-                .optimizationAlgo(OptimizationAlgorithm.LBFGS)
-                .weightInit(WeightInit.XAVIER_LEGACY)
-                .updater(Updater.ADAGRAD)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .weightInit(WeightInit.RELU)
+                .activation(Activation.SIGMOID)
+                .learningRate(learningRate)
+                .regularization(true).l2(1e-4)
                 .list()
                 .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-                        .activation(Activation.LEAKYRELU).learningRate(0.005)
                         .build())
-                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden / 3 * 2)
-                        .activation(Activation.RELU).learningRate(0.5)
+                .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
                         .build())
-                .layer(2, new DenseLayer.Builder().nIn(nHidden / 3 * 2).nOut(nHidden / 3)
-                        .activation(Activation.ELU).learningRate(0.05)
+                .layer(2, new DenseLayer.Builder().nIn(nHidden).nOut(width)
+                        .activation(Activation.SOFTSIGN)
                         .build())
-                .layer(3, new DenseLayer.Builder().nIn(nHidden / 3).nOut(nHidden / 6)
-                        .activation(Activation.RRELU).learningRate(0.005)
-                        .build())
-                .layer(4, new OutputLayer.Builder(LossFunctions.LossFunction.SQUARED_HINGE)
+                .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                         .activation(Activation.IDENTITY)
-                        .nIn(nHidden / 6).nOut(numOutputs).build())
+                        .nIn(width).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
 //        }
-        double[][] labelArray = new double[width][width];
-        for (int i = 0; i < labelArray.length; i++) {
-            labelArray[i][i] = (double) 1;
 
-        }
-        labels = Nd4j.create(labelArray);
         net = new MultiLayerNetwork(configuration);
         net.init();
         net.setListeners(new ScoreIterationListener(1), new StatsListener(storage));
-        net.setLabels(labels);
         if (saveFile.exists()) {
             try {
 
@@ -142,10 +134,10 @@ class ColumnChooser {
 
 
         double[][] inputArray = new double[boardColumnPairs.size()][height * width];
-        double[][] outputArray = new double[boardColumnPairs.size()][width];
+        double[][] outputArray = new double[boardColumnPairs.size()][1];
         for (int i = 0; i < inputArray.length; i++) {
             inputArray[i] = boardColumnPairs.get(i).getBoard();
-            outputArray[i] = boardColumnPairs.get(i).getColumn();
+            outputArray[i] = new double[]{boardColumnPairs.get(i).getColumn()};
         }
 
         INDArray input = Nd4j.create(inputArray);
@@ -159,9 +151,10 @@ class ColumnChooser {
         int epoch = 1;
         do {
             iterator.reset();
+
             net.fit(iterator);
             //net.score() < 0.65 &&
-        } while (++epoch < 500);
+        } while (++epoch < 5);
         System.out.println("finished training");
 
         System.out.println("writing to file in chooser");
@@ -184,7 +177,7 @@ class ColumnChooser {
      * @param gameState The state of the board to which the nn responds
      * @return The output from the network which is close to an integer between 0 and the {@link #width}.
      */
-    public double[] chooseColumn(State gameState) {
+    public double chooseColumn(State gameState) {
         System.out.println("entered chooser in chooser");
         double[][] boardArray = new double[1][gameState.getHeight() * gameState.getWidth()];
         boardArray[0] = gameState.convertToArray();
@@ -192,20 +185,17 @@ class ColumnChooser {
         INDArray input = Nd4j.create(boardArray);
         try {
             INDArray output = net.output(input, false);
-            if (output.isRowVector()) {
-                double[] res = new double[width];
-                for (int i = 0; i < res.length; i++) {
-                    res[i] = output.getDouble(0, i);
-
-                }
+            log.info("network output is actually {}", output.getDouble(0));
+            if (output.isScalar()) {
+                double res = output.getDouble(0) * 9.0;
                 return res;
-            } else {
-                return new double[]{-1.0};
             }
+            return -1.0;
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new double[]{-1.0};
+        return -1.0;
 
     }
 

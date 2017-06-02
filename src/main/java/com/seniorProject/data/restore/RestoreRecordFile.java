@@ -1,19 +1,21 @@
-package data.restore;
+package com.seniorProject.data.restore;
 
-import gameObjects.BoardColumnPair;
-import gameObjects.BoardWinPair;
+import com.seniorProject.gameObjects.BoardColumnPair;
+import com.seniorProject.gameObjects.BoardWinPair;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class has static methods for reading lists of {@link BoardColumnPair} and {@link BoardWinPair} from their respective files.
  * <p>
- * Has a "brother" ({@link data.write.WriteToRecordsFile}) that writes to those same files.
+ * Has a "brother" ({@link com.seniorProject.data.write.WriteToRecordsFile}) that writes to those same files.
  * Created by Itamar.
  */
 public class RestoreRecordFile {
@@ -56,6 +58,14 @@ public class RestoreRecordFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        List<BoardWinPair> list = new ArrayList<>();
+        Set<BoardWinPair> uniqueValues = new HashSet<>();
+        for (BoardWinPair record : records)
+            if (uniqueValues.add(record))
+                list.add(record);
+
+
+        records = list;
         return records;
     }
 
@@ -75,23 +85,24 @@ public class RestoreRecordFile {
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(":");
                 if (data.length != 2) {
-                    System.err.println("Wait what?");
-                    System.exit(1);
+                    if (!(line.isEmpty())) {
+                        System.err.println("Bad Format of line");
+                        System.exit(1);
+                    } else {
+                        continue;
+                    }
                 } else {
                     String boardData = data[0];
                     String output = data[1];
                     String[] boardString = boardData.split(",");
-                    String[] outString = output.split(",");
-                    double[] out = new double[outString.length];
+
+                    double out = Double.parseDouble(output);
                     double[] input = new double[boardString.length];
                     for (int i = 0; i < boardString.length; i++) {
                         double temp = Double.parseDouble(boardString[i]);
                         input[i] = temp;
                     }
-                    for (int i = 0; i < out.length; i++) {
-                        out[i] = Double.parseDouble(outString[i]);
 
-                    }
 
                     BoardColumnPair pair = new BoardColumnPair(input, out);
                     records.add(pair);
@@ -103,6 +114,11 @@ public class RestoreRecordFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        List<BoardColumnPair> list = new ArrayList<>();
+        Set<BoardColumnPair> uniqueValues = new HashSet<>();
+        for (BoardColumnPair record : records)
+            if (uniqueValues.add(record)) list.add(record);
+        records = list;
         return records;
     }
 

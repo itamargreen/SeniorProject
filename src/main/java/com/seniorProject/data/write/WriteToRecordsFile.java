@@ -1,22 +1,26 @@
-package data.write;
+package com.seniorProject.data.write;
 
-import gameObjects.BoardColumnPair;
-import gameObjects.BoardWinPair;
+import com.seniorProject.gameObjects.BoardColumnPair;
+import com.seniorProject.gameObjects.BoardWinPair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class has static methods for writing lists of {@link BoardColumnPair} and {@link BoardWinPair} to their respective files.
  * <p>
- * Has a "brother" ({@link data.restore.RestoreRecordFile}) that reads from those same files and converts them back to lists.
+ * Has a "brother" ({@link com.seniorProject.data.restore.RestoreRecordFile}) that reads from those same files and converts them back to lists.
  * Created by Itamar.
  */
 public class WriteToRecordsFile {
+
+
+    private static final Logger logger = LoggerFactory.getLogger(WriteToRecordsFile.class);
 
     /**
      * This method write a list of {@link BoardWinPair} to the specified file. Uses a bit of regex here and there and a BufferedWriter
@@ -26,7 +30,14 @@ public class WriteToRecordsFile {
      * @see BufferedWriter
      */
     public static void writeRecords(List<BoardWinPair> records, File recordFile) {
-
+        List<BoardWinPair> list = new ArrayList<>();
+        Set<BoardWinPair> uniqueValues = new HashSet<>();
+        for (BoardWinPair record : records) {
+            if (uniqueValues.add(record)) {
+                list.add(record);
+            }
+        }
+        records = list;
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(recordFile));
 
@@ -41,7 +52,9 @@ public class WriteToRecordsFile {
                 line += ":" + out;
                 bw.append(line);
                 bw.newLine();
+                logger.info("wrote this: {}", line);
             }
+
             //presentSave(line);
             bw.flush();
             bw.close();
@@ -72,25 +85,28 @@ public class WriteToRecordsFile {
      * @see BufferedWriter
      */
     public static void writeColumnRecords(List<BoardColumnPair> records, File recordFile) {
-
+        List<BoardColumnPair> list = new ArrayList<>();
+        Set<BoardColumnPair> uniqueValues = new HashSet<>();
+        for (BoardColumnPair record : records) {
+            if (uniqueValues.add(record)) {
+                list.add(record);
+            }
+        }
+        records = list;
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(recordFile));
 
 
             for (BoardColumnPair pair : records) {
                 double[] input = pair.getBoard();
-                double[] out = pair.getColumn();
+                double out = pair.getColumn();
                 String line = Arrays.toString(input);
-                String outLine = Arrays.toString(out);
                 line = line.replaceAll("\\[", "");
                 line = line.replaceAll("\\]", "");
                 line = line.replaceAll("\\s", "");
 
-                outLine = outLine.replaceAll("\\[", "");
-                outLine = outLine.replaceAll("\\]", "");
-                outLine = outLine.replaceAll("\\s", "");
 
-                line += ":" + outLine;
+                line += ":" + out;
                 bw.append(line);
                 bw.newLine();
             }

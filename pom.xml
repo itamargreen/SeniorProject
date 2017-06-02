@@ -6,7 +6,7 @@
 
     <groupId>mySeniorProject</groupId>
     <artifactId>seniorProjectArt</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <build>
         <plugins>
             <plugin>
@@ -19,6 +19,11 @@
                 </configuration>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources/${param}</directory>
+            </resource>
+        </resources>
     </build>
     <dependencies>
         <dependency>

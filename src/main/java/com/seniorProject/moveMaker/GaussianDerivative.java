@@ -1,4 +1,4 @@
-package moveMaker;
+package com.seniorProject.moveMaker;
 
 import org.apache.commons.math3.util.FastMath;
 import org.nd4j.linalg.api.complex.IComplexDouble;
@@ -11,6 +11,7 @@ import org.nd4j.linalg.factory.Nd4j;
 /**
  * Created by User on 05-May-17.
  */
+@Deprecated
 class GaussianDerivative extends BaseTransformOp {
 
     public GaussianDerivative() {
