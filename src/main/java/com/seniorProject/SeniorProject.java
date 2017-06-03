@@ -96,7 +96,7 @@ public class SeniorProject {
         File chooser = new File(env + "\\ChooserModel.zip");
         List<BoardWinPair> record = RestoreRecordFile.readRecords(recordsWinPairs);
         EvaluatorNN.setStats(statsStorage);
-        EvaluatorNN.loadNN(model);
+        EvaluatorNN.loadNN(model, record);
 
         BoardNetworkCoordinator networkCoordinator = new BoardNetworkCoordinator(chooser, recordColumnFile);
         networkCoordinator.setStorage(statsStorage);

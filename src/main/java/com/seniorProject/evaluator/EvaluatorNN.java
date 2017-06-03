@@ -7,6 +7,7 @@ import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.eval.RegressionEvaluation;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.GradientNormalization;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
@@ -183,7 +184,7 @@ public class EvaluatorNN {
      * @param model     the file to save the net model to.
      */
     public static void firstNeuralTest(List<BoardWinPair> records, int totalSize, File model) {
-        int nHidden = totalSize * 3;
+        int nHidden = totalSize * 2;
         int numOutputs = 1;
         if (net == null) {
             net = new MultiLayerNetwork(new NeuralNetConfiguration.Builder()
@@ -191,18 +192,26 @@ public class EvaluatorNN {
                     .iterations(1)
                     .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                     .learningRate(1e-5)
-                    .regularization(true).l2(1e-4).dropOut(0.5)
+                    .regularization(true).l2(1e-4)
                     .miniBatch(false)
+                    .gradientNormalization(GradientNormalization.ClipL2PerLayer)
+                    .gradientNormalizationThreshold(1)
                     .weightInit(WeightInit.RELU)
                     .activation(Activation.RELU)
                     .list()
-                    .layer(0, new DenseLayer.Builder().nIn(totalSize).nOut(nHidden)
+                    .layer(0, new DenseLayer.Builder().nIn(totalSize).nOut(totalSize / 3)
                             .build())
-                    .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
+                    .layer(1, new DenseLayer.Builder().nIn(totalSize / 3).nOut(totalSize / 7)
                             .build())
-                    .layer(2, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
+                    .layer(2, new DenseLayer.Builder().nIn(totalSize / 7).nOut(3)
                             .build())
-                    .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                    .layer(3, new DenseLayer.Builder().nIn(3).nOut(totalSize / 7)
+                            .build())
+                    .layer(4, new DenseLayer.Builder().nIn(totalSize / 7).nOut(totalSize / 6)
+                            .build())
+                    .layer(5, new DenseLayer.Builder().nIn(totalSize / 6).nOut(nHidden)
+                            .build())
+                    .layer(6, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                             .activation(Activation.IDENTITY)
                             .nIn(nHidden).nOut(numOutputs).build())
                     .pretrain(false).backprop(true).build());

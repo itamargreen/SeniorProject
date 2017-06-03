@@ -8,6 +8,7 @@ import org.deeplearning4j.earlystopping.saver.LocalFileModelSaver;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.distribution.GaussianDistribution;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -85,25 +86,29 @@ class ColumnChooser {
     private void createColumnChooser() {
         int totalSize = height * width;
         int numInput = totalSize;
-        int nHidden = totalSize + 5;
+        int nHidden = totalSize * 3;
         int numOutputs = 1;
 
+        GaussianDistribution distribution = new GaussianDistribution(3, 1.5);
 
-        double learningRate = 1e-3;
+        double learningRate = 1e-5;
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
                 .iterations(1)
+                .seed(42)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .weightInit(WeightInit.RELU)
-                .activation(Activation.SIGMOID)
+                .activation(Activation.RELU)
                 .learningRate(learningRate)
                 .regularization(true).l2(1e-4)
                 .list()
                 .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
+                        .weightInit(WeightInit.DISTRIBUTION)
+                        .dist(distribution)
                         .build())
                 .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
                         .build())
                 .layer(2, new DenseLayer.Builder().nIn(nHidden).nOut(width)
-                        .activation(Activation.SOFTSIGN)
+
                         .build())
                 .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                         .activation(Activation.IDENTITY)
@@ -154,7 +159,7 @@ class ColumnChooser {
 
             net.fit(iterator);
             //net.score() < 0.65 &&
-        } while (++epoch < 5);
+        } while (++epoch < 500);
         System.out.println("finished training");
 
         System.out.println("writing to file in chooser");
@@ -187,7 +192,7 @@ class ColumnChooser {
             INDArray output = net.output(input, false);
             log.info("network output is actually {}", output.getDouble(0));
             if (output.isScalar()) {
-                double res = output.getDouble(0) * 9.0;
+                double res = output.getDouble(0);
                 return res;
             }
             return -1.0;
