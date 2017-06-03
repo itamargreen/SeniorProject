@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- Specify the refresh internal in seconds. -->
+<Configuration debug="true" monitorInterval="60">
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <ThresholdFilter level="TRACE" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="%d %p [%t] %c{1.}:%L - %m%n"/>
+        </Console>
+        <RollingFile name="file" fileName="/var/log/seniorProject/seniorProject.log" append="true"
+                     filePattern="/var/log/seniorProject/seniorProject-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="%d %p [%t] %c{1.}:%L - %m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <!-- Keep 20 zipped files, oldest has highest number -->
+            <DefaultRolloverStrategy fileIndex="min" min="1" max="20"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <!--<logger name="com.cellebrite" level="TRACE" additivity="FALSE">-->
+            <!--<AppenderRef ref="console"/>-->
+            <!--<AppenderRef ref="file"/>-->
+        <!--</logger>-->
+
+        <Root level="trace">
+            <AppenderRef ref="file"/>
+            <AppenderRef ref="console"/>
+        </Root>
+    </Loggers>
+</Configuration>
