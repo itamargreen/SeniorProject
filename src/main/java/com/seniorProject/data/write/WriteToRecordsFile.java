@@ -52,7 +52,6 @@ public class WriteToRecordsFile {
                 line += ":" + out;
                 bw.append(line);
                 bw.newLine();
-                logger.info("wrote this: {}", line);
             }
 
             //presentSave(line);

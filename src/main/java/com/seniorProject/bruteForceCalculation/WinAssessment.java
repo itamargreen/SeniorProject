@@ -28,6 +28,8 @@ public class WinAssessment {
      */
     private static double countRed = 0;
 
+    private static int maxDepth = 0;
+
     /**
      * Calls recursive method that calculates by brute force the "probability" for red player to win
      *
@@ -44,8 +46,10 @@ public class WinAssessment {
 
 
         TreeNode<State> futureStates = new TreeNode<>(null, game, game.getWidth());
-        formLayer(futureStates, -1, futureStates, 1);
-        diff = (countRed - countBlue) / Math.max(Math.abs(countBlue), Math.abs(countRed)) / 2.0;
+        formLayer(futureStates, -player, futureStates, 1);
+        alphabeta(futureStates, maxDepth - 1, Double.MIN_VALUE, Double.MAX_VALUE, true);
+        diff = (countRed + countBlue) / Math.max(Math.abs(countBlue), Math.abs(countRed));
+
         System.out.println(diff + " after " + count);
 
         return futureStates;
@@ -65,14 +69,25 @@ public class WinAssessment {
      */
     private static void formLayer(TreeNode<State> node, int player, TreeNode<State> parentNode, int depth) {
         State current = node.getContent();
-
-        if (/*(Math.abs(r1-r2)/Math.max(countBlue,countRed)> 0.35 && count>1000000 )|| */count > 1000000) {
+        if (depth > 25)
+            return;
+        if (/*(Math.abs(r1-r2)/Math.max(countBlue,countRed)> 0.35 && count>1000000 )|| */count > 10000000) {
 
             return;
         }
 
         if (!node.getContent().checkWin().equals(CellState.EMPTY)) {
             System.out.println("found victory for " + (node.getContent().checkWin()) + " after " + depth + " turns");
+            if (depth == 1) {
+                switch (current.checkWin()) {
+                    case BLUE:
+                        countBlue -= 6;
+                        break;
+                    case RED:
+                        countRed += 10;
+                        break;
+                }
+            }
             return;
         } else {
             //iterate over columns and create possibility tree for each column
@@ -90,13 +105,13 @@ public class WinAssessment {
                                 countBlue -= 6;
                                 break;
                             case RED:
-                                countRed += 6;
+                                countRed += 10;
                                 break;
                         }
                     } else {
                         switch (next.checkWin()) {
                             case BLUE:
-                                double loseWeight = 0.5;
+                                double loseWeight = 0.05;
                                 countBlue -= ((1 + loseWeight) / Math.pow(depth, 1));
                                 break;
                             case RED:
@@ -107,10 +122,44 @@ public class WinAssessment {
                 }
                 TreeNode<State> nextNode = new TreeNode<>(node, next, next.getWidth());
                 if (next.checkWin().equals(CellState.EMPTY)) {
+                    if (depth > maxDepth)
+                        maxDepth = depth;
                     formLayer(nextNode, player * (-1), parentNode, depth + 1);
                 }
 
 
+            }
+        }
+    }
+
+    private static double heuristic(TreeNode<State> node) {
+        return 1.0;
+    }
+
+    public static double alphabeta(TreeNode<State> node, int depth, double alpha, double beta, boolean maximizingPlayer) {
+        if (depth == 0 || !node.getContent().checkWin().equals(CellState.EMPTY))
+            return heuristic(node);
+        else {
+            if (maximizingPlayer) {
+                double value = Double.MIN_VALUE;
+                for (TreeNode<State> child : node.getChildren()) {
+                    value = Math.max(value, alphabeta(child, depth - 1, alpha, beta, false));
+                    alpha = Math.max(alpha, value);
+                    if (beta <= alpha)
+                        break;
+
+                }
+                return value;
+            } else {
+                double value = Double.MAX_VALUE;
+                for (TreeNode<State> child : node.getChildren()) {
+                    value = Math.min(value, alphabeta(child, depth - 1, alpha, beta, true));
+                    alpha = Math.min(alpha, value);
+                    if (beta <= alpha)
+                        break;
+
+                }
+                return value;
             }
         }
     }

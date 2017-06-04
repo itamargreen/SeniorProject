@@ -287,7 +287,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
     private double assessRedWin() {
         CellState tes = gameState.checkWin();
         System.out.println(tes);
-        WinAssessment.assessWin(gameState, -1);
+        WinAssessment.assessWin(gameState, playerTurn);
         return WinAssessment.getDiff();
     }
 
@@ -304,7 +304,8 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         whenAddingRecord.setText("now has " + record.size() + " records");
         WriteToRecordsFile.writeRecords(record, recordFile);
         EvaluatorNN.addPair(pair);
-        EvaluatorNN.train(evaluatorModel, gameState.getWidth() * gameState.getHeight());
+        //EvaluatorNN.train(evaluatorModel, gameState.getWidth() * gameState.getHeight());
+
     }
 
     /**
@@ -448,14 +449,14 @@ public class Board extends JFrame implements MouseListener, WindowListener {
                 repaint();
                 if (autoCreateDataSet.isSelected()) {
                     trainEvaluator(gameState);
-                    createChooserTrainSet(gameState);
-                    networkCoordinator.trainChooser();
+                    //createChooserTrainSet(gameState);
+                    //networkCoordinator.trainChooser();
 
                 }
-                if (playerTurn == -1) {
-                    System.out.println("Computer making move");
-                    moveMade();
-                }
+//                if (playerTurn == -1) {
+//                    System.out.println("Computer making move");
+//                    moveMade();
+//                }
 
                 break;
             }

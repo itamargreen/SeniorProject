@@ -4,7 +4,6 @@ import com.seniorProject.gameObjects.BoardColumnPair;
 import com.seniorProject.gameObjects.State;
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
-import org.deeplearning4j.earlystopping.saver.LocalFileModelSaver;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -38,13 +37,11 @@ import java.util.List;
  */
 class ColumnChooser {
     private static final Logger log = LoggerFactory.getLogger(ColumnChooser.class);
-    private final int seed = 12345;
     private MultiLayerNetwork net = null;
     private List<BoardColumnPair> boardColumnPairs;
     private File saveFile;
     private int height;
     private int width;
-    private INDArray labels;
     private StatsStorage storage;
 
     /**
@@ -56,36 +53,20 @@ class ColumnChooser {
      * @param saved            Save file (.bin) of the model.
      */
     public ColumnChooser(List<BoardColumnPair> boardColumnPairs, int height, int width, File saved, StatsStorage storage) {
-        File saveFile2 = new File(System.getenv("AppData") + "\\SeniorProjectDir\\");
         this.width = width;
         this.height = height;
         this.boardColumnPairs = boardColumnPairs;
         saveFile = saved;
         this.storage = storage;
-        LocalFileModelSaver saver = new LocalFileModelSaver(saveFile2.getPath());
         createColumnChooser();
-
-
-        //trainNN();
     }
 
-    public ColumnChooser(File saved) {
-        MultiLayerNetwork restored = null;
-        try {
-
-            restored = ModelSerializer.restoreMultiLayerNetwork(saved);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        net = restored;
-    }
 
     /**
      * Create configuration for neural network and create the labels, which increases the usefulness.
      */
     private void createColumnChooser() {
         int totalSize = height * width;
-        int numInput = totalSize;
         int nHidden = totalSize * 3;
         int numOutputs = 1;
 
@@ -101,7 +82,7 @@ class ColumnChooser {
                 .learningRate(learningRate)
                 .regularization(true).l2(1e-4)
                 .list()
-                .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
+                .layer(0, new DenseLayer.Builder().nIn(totalSize).nOut(nHidden)
                         .weightInit(WeightInit.DISTRIBUTION)
                         .dist(distribution)
                         .build())
@@ -114,21 +95,21 @@ class ColumnChooser {
                         .activation(Activation.IDENTITY)
                         .nIn(width).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
-//        }
-
-        net = new MultiLayerNetwork(configuration);
-        net.init();
-        net.setListeners(new ScoreIterationListener(1), new StatsListener(storage));
         if (saveFile.exists()) {
-            try {
+            if (saveFile.isFile() && saveFile.getName().endsWith(".zip")) {
+                try {
+                    net = ModelSerializer.restoreMultiLayerNetwork(saveFile, true);
 
-                ModelSerializer.restoreMultiLayerNetwork(saveFile);
-            } catch (IOException e) {
-                e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+        } else {
+
+            net = new MultiLayerNetwork(configuration);
+            net.init();
         }
-
-
+        net.setListeners(new ScoreIterationListener(1), new StatsListener(storage));
     }
 
     /**
@@ -158,7 +139,6 @@ class ColumnChooser {
             iterator.reset();
 
             net.fit(iterator);
-            //net.score() < 0.65 &&
         } while (++epoch < 500);
         System.out.println("finished training");
 
