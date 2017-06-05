@@ -8,6 +8,7 @@ import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.eval.RegressionEvaluation;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.distribution.GaussianDistribution;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -26,6 +27,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -183,16 +186,17 @@ public class EvaluatorNN {
      * @param model     the file to save the net model to.
      */
     public static void firstNeuralTest(List<BoardWinPair> records, int totalSize, File model) {
-        int nHidden = totalSize * 3;
+        int nHidden = totalSize;
         int numOutputs = 1;
+        GaussianDistribution distribution = new GaussianDistribution(0.5, 1);
         if (net == null) {
             net = new MultiLayerNetwork(new NeuralNetConfiguration.Builder()
-                    .seed(1234)
+                    .seed(452)
                     .iterations(1)
                     .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                    .learningRate(1e-5)
-                    .regularization(true).l2(1e-4).dropOut(0.5)
-                    .miniBatch(false)
+                    .learningRate(1e-4)
+
+                    .regularization(true).l2(1e-3)
                     .weightInit(WeightInit.RELU)
                     .activation(Activation.RELU)
                     .list()
@@ -200,17 +204,37 @@ public class EvaluatorNN {
                             .build())
                     .layer(1, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
                             .build())
-                    .layer(2, new DenseLayer.Builder().nIn(nHidden).nOut(nHidden)
+                    .layer(2, new DenseLayer.Builder().nIn(nHidden).nOut(7)
                             .build())
                     .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                             .activation(Activation.IDENTITY)
-                            .nIn(nHidden).nOut(numOutputs).build())
+                            .nIn(7).nOut(numOutputs).build())
                     .pretrain(false).backprop(true).build());
 
 
             net.init();
 
-            net.setListeners(new ScoreIterationListener(3), new StatsListener(storage));
+            net.setListeners(new ScoreIterationListener(5), new StatsListener(storage));
+
+            List<Double> linspace = new ArrayList<>();
+            linspace.add(-1.0);
+            DecimalFormat df = new DecimalFormat("#.###");
+            df.setRoundingMode(RoundingMode.CEILING);
+            while (linspace.get(linspace.size() - 1) <= 1.0) {
+
+                int currentIndex = linspace.size() - 1;
+                double current = Double.parseDouble(df.format(linspace.get(currentIndex)));
+
+                current += 0.001;
+                linspace.add(current);
+            }
+            double[][] labels = new double[linspace.size()][1];
+            for (int i = 0; i < linspace.size(); i++) {
+                labels[i][0] = linspace.get(i);
+            }
+            INDArray netLabels = Nd4j.create(labels);
+            net.setLabels(netLabels);
+
         }
         if (records.size() != 0) {
             double[][] inputData = new double[records.size()][totalSize];
@@ -238,7 +262,7 @@ public class EvaluatorNN {
                 iterator.reset();
                 net.fit(iterator);
 
-            } while (++epoch < 200);
+            } while (++epoch < 100);
 
             System.out.println("finished training on epoch " + epoch + " and score change of " + (net.score() - initScore));
 

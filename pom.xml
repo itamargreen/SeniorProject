@@ -57,11 +57,7 @@
                 </executions>
             </plugin>
         </plugins>
-        <resources>
-            <resource>
-                <directory>src/main/resources/${param}</directory>
-            </resource>
-        </resources>
+
     </build>
 
     <dependencies>

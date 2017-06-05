@@ -4,7 +4,7 @@
 <Configuration debug="true" monitorInterval="60">
     <Appenders>
         <Console name="console" target="SYSTEM_OUT">
-            <ThresholdFilter level="TRACE" onMatch="ACCEPT" onMismatch="DENY"/>
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout pattern="%d %p [%t] %c{1.}:%L - %m%n"/>
         </Console>
         <RollingFile name="file" fileName="/var/log/seniorProject/seniorProject.log" append="true"
