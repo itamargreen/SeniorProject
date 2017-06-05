@@ -64,20 +64,21 @@ public class SeniorProject {
             dataFileDir.mkdir();
         }
         File res = new File(resourcePath);
-        Arrays.asList(res.listFiles()).forEach(file -> {
-            if (file.isFile()) {
-                String name = file.getName();
-                if (name.endsWith(".txt") || name.endsWith(".zip") || name.endsWith(".bin")) {
-                    Path destination = Paths.get(env, name);
-                    try {
-                        System.out.println(Files.copy(file.toPath(), destination, StandardCopyOption.REPLACE_EXISTING));
-                    } catch (IOException e) {
-                        e.printStackTrace();
+        if (dataFileDir.listFiles().length == 0)
+            Arrays.asList(res.listFiles()).forEach(file -> {
+                if (file.isFile()) {
+                    String name = file.getName();
+                    if (name.endsWith(".txt") || name.endsWith(".zip") || name.endsWith(".bin")) {
+                        Path destination = Paths.get(env, name);
+                        try {
+                            System.out.println(Files.copy(file.toPath(), destination, StandardCopyOption.REPLACE_EXISTING));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-            }
 
-        });
+            });
         recordsWinPairs = new File(env + "\\recordsWinPairs.txt");
         if (!recordsWinPairs.exists()) {
             try {
@@ -101,7 +102,7 @@ public class SeniorProject {
         File chooser = new File(env + "\\ChooserModel.zip");
         List<BoardWinPair> record = RestoreRecordFile.readRecords(recordsWinPairs);
         EvaluatorNN.setStats(statsStorage);
-        EvaluatorNN.loadNN(model, record);
+        EvaluatorNN.loadNN(model);
 
         BoardNetworkCoordinator networkCoordinator = new BoardNetworkCoordinator(chooser, recordColumnFile);
         networkCoordinator.setStorage(statsStorage);

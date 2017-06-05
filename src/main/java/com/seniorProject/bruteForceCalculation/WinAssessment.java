@@ -30,6 +30,8 @@ public class WinAssessment {
 
     private static int maxDepth = 0;
 
+    private static int levelsCompleted = 0;
+
     /**
      * Calls recursive method that calculates by brute force the "probability" for red player to win
      *
@@ -121,14 +123,17 @@ public class WinAssessment {
                     }
                 }
                 TreeNode<State> nextNode = new TreeNode<>(node, next, next.getWidth());
-                if (next.checkWin().equals(CellState.EMPTY)) {
-                    if (depth > maxDepth)
-                        maxDepth = depth;
-                    formLayer(nextNode, player * (-1), parentNode, depth + 1);
-                }
-
 
             }
+            int childrenCount = 0;
+            for (TreeNode<State> child :
+                    node.getChildren()) {
+
+                if (depth > levelsCompleted) {
+
+                }
+            }
+
         }
     }
 

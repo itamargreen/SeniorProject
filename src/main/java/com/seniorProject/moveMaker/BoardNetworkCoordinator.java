@@ -83,6 +83,8 @@ public class BoardNetworkCoordinator {
      */
     public int getNNAction(State game) {
         double res = chooser.chooseColumn(game);
+        if (res > 6.6)
+            res = 6.2;
         return Math.round((float) res);
     }
 
@@ -105,6 +107,7 @@ public class BoardNetworkCoordinator {
         System.out.println("entered create chooser in coordinator");
         pairs = RestoreRecordFile.readColumnRecords(recordsColumn);
         chooser = new ColumnChooser(pairs, height, width, chooserModel, storage);
+        //trainChooser();
 
     }
 

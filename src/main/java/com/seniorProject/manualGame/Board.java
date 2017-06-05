@@ -48,6 +48,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      * Counts number of moves made.
      */
     private static int moveCounter = 0;
+    final JCheckBox vsC = new JCheckBox("Vs computer");
     /**
      * Checkbox in debugging and control panel for creating training com.seniorProject.data while playing.
      */
@@ -204,6 +205,10 @@ public class Board extends JFrame implements MouseListener, WindowListener {
             JOptionPane.showMessageDialog(null, "Done");
         });
 
+        JButton trainChooser = new JButton("Train Chooser");
+        writeToFile.addActionListener(e -> networkCoordinator.trainChooser());
+
+
         JButton loadLatest = new JButton("load latest");
         loadLatest.addActionListener(e -> {
             List<BoardWinPair> forLatest = record;
@@ -218,11 +223,14 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         container.add(calculate);
         container.add(eval);
         container.add(autoCreateDataSet);
+        container.add(vsC);
         container.add(whenAddingRecord);
         JLabel player = new JLabel("currently: ");
         container.add(player);
         container.add(writeToFile);
         container.add(loadLatest);
+        container.add(trainChooser);
+
 
         layout.putConstraint(SpringLayout.WEST, calculate, 20, SpringLayout.WEST, container);
         layout.putConstraint(SpringLayout.NORTH, calculate, 10, SpringLayout.NORTH, container);
@@ -246,6 +254,10 @@ public class Board extends JFrame implements MouseListener, WindowListener {
         layout.putConstraint(SpringLayout.NORTH, autoCreateDataSet, 15, SpringLayout.SOUTH, eval);
         layout.putConstraint(SpringLayout.WEST, loadLatest, 0, SpringLayout.WEST, createTrainingSetForChooser);
         layout.putConstraint(SpringLayout.NORTH, loadLatest, 15, SpringLayout.SOUTH, createTrainingSetForChooser);
+        layout.putConstraint(SpringLayout.WEST, trainChooser, 0, SpringLayout.WEST, loadLatest);
+        layout.putConstraint(SpringLayout.NORTH, trainChooser, 15, SpringLayout.SOUTH, loadLatest);
+        layout.putConstraint(SpringLayout.EAST, vsC, -20, SpringLayout.WEST, trainChooser);
+        layout.putConstraint(SpringLayout.NORTH, vsC, 15, SpringLayout.NORTH, trainChooser);
 
         frame.setPreferredSize(new Dimension(350, 300));
         double x = getContentPane().getLocationOnScreen().getX() + (boardWidth * 50 + 100);
@@ -312,34 +324,33 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      * This calls the coordinator for the chooser neural network, and applies the chooser's output as the computer made move.
      */
     private void moveMade() {
-        if (moveCounter > 30) {
-            int choice = (int) (Math.random() * 7);
-            while (!(gameState.makeMove(playerTurn, choice))) {
-                choice = (int) (Math.random() * 7);
+
+        System.out.println("entered move maker method in board");
+        int result = networkCoordinator.getNNAction(gameState);
+        log.debug("the result was {}", result);
+
+        if (result < 7 && result > -1) {
+
+            if (gameState.makeMove(playerTurn, result)) {
+                panel.setState(gameState);
+                repaint();
+                playerTurn = -playerTurn;
+            } else if (result > 1 && gameState.makeMove(playerTurn, result - 1)) {
+                panel.setState(gameState);
+                repaint();
+                playerTurn = -playerTurn;
+            } else if (result < 5 && gameState.makeMove(playerTurn, result + 1)) {
+                panel.setState(gameState);
+                repaint();
+                playerTurn = -playerTurn;
             }
-            gameState.makeMove(playerTurn, choice);
+
+
         } else {
-            System.out.println("entered move maker method in board");
-            int result = networkCoordinator.getNNAction(gameState);
-            log.debug("the result was {}", result);
-
-            if (result < 7 && result > -1) {
-
-                if (gameState.makeMove(playerTurn, result)) {
-                    moveCounter = 0;
-                    panel.setState(gameState);
-                    repaint();
-                    playerTurn = -playerTurn;
-                } else {
-                    moveCounter++;
-                    moveMade();
-                }
-
-
-            } else {
-                log.error("Problem. Invalid result, {}", result);
-            }
+            log.error("Problem. Invalid result, {}", result);
+            moveMade();
         }
+
     }
 
     /**
@@ -443,20 +454,39 @@ public class Board extends JFrame implements MouseListener, WindowListener {
             if (location.getX() > (x) && location.getX() < (x + 30)) {
                 gameState.makeMove(playerTurn, i);
                 playerTurn = -playerTurn;
-
                 panel.setState(gameState);
-
                 repaint();
-                if (autoCreateDataSet.isSelected()) {
-                    trainEvaluator(gameState);
-                    //createChooserTrainSet(gameState);
-                    //networkCoordinator.trainChooser();
+                if (!gameState.checkWin().equals(CellState.EMPTY)) {
+                    String message = "Game over. " + gameState.checkWin() + " has won\nNew game?";
+                    int retval = JOptionPane.showConfirmDialog(null, message, "Game Over!", JOptionPane.YES_NO_OPTION);
+                    if (retval == JOptionPane.YES_OPTION) {
+                        gameState.newGame(boardWidth, boardHeight);
+                    } else if (retval == JOptionPane.NO_OPTION) {
+                        JOptionPane.showMessageDialog(null, "Ok, bye! Hope you enjoyed");
+                        System.exit(0);
+                    }
 
                 }
-//                if (playerTurn == -1) {
-//                    System.out.println("Computer making move");
-//                    moveMade();
-//                }
+                if (vsC.isSelected()) {
+                    if (playerTurn == -1) {
+                        log.info("thinking... {}", playerTurn);
+
+                        moveMade();
+                    }
+                    log.info("now it's: {}", playerTurn);
+                    if (playerTurn == 1 && autoCreateDataSet.isSelected()) {
+                        BoardColumnPair playerPair = new BoardColumnPair(gameState.convertToArray(), i);
+                        networkCoordinator.addPair(playerPair);
+                        log.info("added record :)");
+                    }
+                } else {
+                    if (playerTurn == 1 && autoCreateDataSet.isSelected()) {
+                        BoardColumnPair playerPair = new BoardColumnPair(gameState.convertToArray(), i);
+                        networkCoordinator.addPair(playerPair);
+                        log.info("added record :)");
+                    }
+                }
+
 
                 break;
             }
@@ -482,7 +512,7 @@ public class Board extends JFrame implements MouseListener, WindowListener {
      */
     public void windowClosing(WindowEvent e) {
         networkCoordinator.trainChooser();
-        EvaluatorNN.train(evaluatorModel, boardHeight * boardWidth);
+        //EvaluatorNN.train(evaluatorModel, boardHeight * boardWidth);
         copyToResources();
         System.exit(0);
     }

@@ -109,6 +109,13 @@ class ColumnChooser {
             net = new MultiLayerNetwork(configuration);
             net.init();
         }
+        double[][] labels = new double[width][1];
+        for (int i = 0; i < labels.length; i++) {
+            labels[i][0] = i;
+        }
+        INDArray labelsArray = Nd4j.create(labels);
+
+        net.setLabels(labelsArray);
         net.setListeners(new ScoreIterationListener(1), new StatsListener(storage));
     }
 
@@ -117,7 +124,7 @@ class ColumnChooser {
      */
     private void trainNN() {
         System.out.println("entered trainNN in chooser");
-
+        net.setListeners(new ScoreIterationListener(1), new StatsListener(storage));
 
         double[][] inputArray = new double[boardColumnPairs.size()][height * width];
         double[][] outputArray = new double[boardColumnPairs.size()][1];
